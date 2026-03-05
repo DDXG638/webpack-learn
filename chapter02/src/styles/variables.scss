@@ -1,0 +1,72 @@
+// SCSS 变量文件 - 演示 sass-loader
+
+// 颜色变量
+$primary-color: #e74c3c;
+$secondary-color: #3498db;
+$success-color: #2ecc71;
+$warning-color: #f39c12;
+$danger-color: #e74c3c;
+
+// 字体大小
+$font-size-base: 16px;
+$font-size-small: 14px;
+$font-size-large: 18px;
+
+// 混合器 (Mixin)
+@mixin rounded-box($radius: 8px) {
+  border-radius: $radius;
+  border: 1px solid #ddd;
+}
+
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// 使用 SCSS 变量和混合器的示例样式
+.demo-scss {
+  background-color: $primary-color;
+  color: white;
+  padding: 20px;
+  @include rounded-box(12px);
+  @include flex-center;
+  flex-direction: column;
+
+  p {
+    margin: 0;
+    font-size: $font-size-base;
+
+    &::before {
+      content: 'SCSS: ';
+      font-weight: bold;
+    }
+  }
+
+  &:hover {
+    background-color: darken($primary-color, 10%);
+  }
+}
+
+// 嵌套规则示例
+.nested-example {
+  ul {
+    list-style: none;
+    padding: 0;
+
+    li {
+      padding: 10px;
+      margin: 5px 0;
+      background: rgba(255, 255, 255, 0.2);
+
+      a {
+        color: white;
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+/* 导入的CSS文件 - 演示 CSS Loader 的 @import 处理 */
+
+.imported-note {
+  font-size: 14px;
+  color: #888;
+  font-style: italic;
+  padding: 10px;
+  border-left: 3px solid #42b883;
+  background: #f9f9f9;
+}
