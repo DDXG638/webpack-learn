@@ -62,7 +62,7 @@ import HelloWorld from './components/HelloWorld.vue';
 import rawText from './assets/demo.txt';
 // 使用 asset 模块处理图片
 import smallImage from './assets/small-logo.svg';
-import largeImage from './assets/large-image.svg';
+import largeImage from './assets/a2ui-composer.png';
 
 // ES6+ 语法测试
 const testEs6 = () => {
