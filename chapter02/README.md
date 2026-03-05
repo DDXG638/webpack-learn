@@ -63,8 +63,8 @@ Webpack 4+ 中，Loader 的执行顺序遵循以下规则：
 | style-loader | 将 CSS 注入到 DOM |
 | vue-style-loader | Vue 单文件组件样式热更新支持 |
 | sass / sass-loader | SCSS/SASS 预处理器支持 |
-| file-loader | 处理文件资源（Webpack5 推荐使用 Asset Modules） |
-| url-loader | 处理文件为 Base64（Webpack5 推荐使用 Asset Modules） |
+| file-loader | 处理文件资源（Webpack5 推荐使用 Asset Modules）。开发时可以使用相对路径；部署时，使用正确的配置，webpack 将会在打包输出中自动重写文件路径为正确的 URL。 |
+| url-loader | 处理文件为 Base64（Webpack5 推荐使用 Asset Modules）。如果文件大于该阈值，会自动的交给 file-loader 处理。 |
 | raw-loader | 将文件作为字符串加载（Webpack5 推荐使用 asset/source） |
 | html-webpack-plugin | 生成 HTML 文件并自动注入 JS |
 
@@ -74,7 +74,7 @@ Webpack 4+ 中，Loader 的执行顺序遵循以下规则：
 
 | Loader | 作用 |
 |--------|------|
-| vue-loader | 解析和编译 Vue 单文件组件(.vue文件) |
+| [vue-loader](https://vue-loader.vuejs.org/zh/) | 解析和编译 Vue 单文件组件(.vue文件) |
 | ts-loader | 将 TypeScript 转换为 JavaScript |
 | babel-loader | 将 ES6+ 语法转换为 ES5 |
 | css-loader | 解析 CSS 文件中的 @import 和 url() |
@@ -105,7 +105,7 @@ Webpack 4+ 中，Loader 的执行顺序遵循以下规则：
 - 需要配合 sass 包使用
 
 #### 6. Asset Modules (Webpack5)
-Webpack5 引入了资源模块替代传统的 file-loader 和 url-loader：
+Webpack5 引入了[资源模块](https://www.webpackjs.com/guides/asset-modules/)替代传统的 file-loader 和 url-loader：
 
 | 类型 | 说明 | 替代 |
 |------|------|------|
@@ -186,6 +186,24 @@ Webpack5 引入了资源模块替代传统的 file-loader 和 url-loader：
 ## 课后思考
 
 1. Loader 的执行顺序是怎样的？如何控制 Loader 的执行优先级？
+   - **执行顺序**：Webpack 的 Loader 链式调用顺序是**从下到上、从右到左**（类似函数组合）。例如 `['style-loader', 'css-loader', 'sass-loader']` 的执行顺序是：sass-loader → css-loader → style-loader。
+   - **控制优先级**：可以通过 `enforce` 字段控制：
+     - `pre`：优先执行（在所有普通 Loader 之前）
+     - `normal`：普通执行（默认）
+     - `post`：最后执行（在所有 Loader 之后）
+
 2. Webpack5 的 Asset Modules 与传统的 file-loader/url-loader 有什么区别？
+   - **内置 vs 独立**：Asset Modules 是 Webpack5 内置的，无需安装额外包；file-loader/url-loader 是独立的第三方 Loader
+   - **配置更简洁**：Asset Modules 无需配置 publicPath、outputPath 等，配置更简单
+   - **性能更好**：Asset Modules 是 Webpack 内置实现，构建性能更好
+   - **推荐**：Webpack5 推荐使用 Asset Modules，但 file-loader/url-loader 仍可使用
+
 3. 为什么 sass-loader 需要放在 Loader 链的最后（靠近源文件）？
+   - **链式执行原理**：Loader 链从右到左执行，每个 Loader 将处理结果传递给下一个 Loader
+   - **执行顺序**：sass-loader（最右/最后）→ css-loader → style-loader（最左/最先）
+   - **原因**：SCSS 需要先被 sass-loader 编译成 CSS，然后 css-loader 处理 @import 和 url()，最后 style-loader 注入到 DOM。如果顺序反了，SCSS 不会被编译，直接作为 CSS 处理会报错
+
 4. Babel 的 `cacheDirectory` 选项有什么作用？
+   - **缓存机制**：将 Babel 转译结果缓存到文件系统（默认在 node_modules/.cache/babel-loader/）
+   - **性能提升**：二次构建时直接读取缓存，避免重复转译，显著提升构建速度
+   - **适用场景**：开发模式提升尤为明显，生产模式也推荐开启

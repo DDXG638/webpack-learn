@@ -103,8 +103,11 @@ export default (env, argv) => {
         {
           test: /\.scss$/,
           use: [
+            // style-loader: 把 CSS 插入到 DOM 中
             isProduction ? 'style-loader' : 'vue-style-loader',
+            // 将 CSS 转化成 ES 模块，会对 @import 和 url() 进行处理
             'css-loader',
+            // 将 Sass 编译成 CSS
             'sass-loader',
           ],
         },
@@ -135,6 +138,8 @@ export default (env, argv) => {
 
     // 插件
     plugins: [
+      // 这个插件的职责是将你定义过的其它规则复制并应用到 .vue 文件里相应语言的块。
+      // 例如，如果你设置了 /\.js$/ 和 /\.css$/ 的规则，那么它会应用到 .vue 文件里的 <script> 块 和 <style>块。
       new VueLoaderPlugin(),
       new HtmlWebpackPlugin({
         template: './public/index.html',
