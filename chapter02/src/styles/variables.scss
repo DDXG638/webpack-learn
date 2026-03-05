@@ -1,5 +1,7 @@
 // SCSS 变量文件 - 演示 sass-loader
 
+@use "sass:color";
+
 // 颜色变量
 $primary-color: #e74c3c;
 $secondary-color: #3498db;
@@ -44,7 +46,7 @@ $font-size-large: 18px;
   }
 
   &:hover {
-    background-color: darken($primary-color, 10%);
+    background-color: color.adjust($primary-color, $lightness: -10%);
   }
 }
 

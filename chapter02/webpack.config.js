@@ -108,7 +108,13 @@ export default (env, argv) => {
             // 将 CSS 转化成 ES 模块，会对 @import 和 url() 进行处理
             'css-loader',
             // 将 Sass 编译成 CSS
-            'sass-loader',
+            {
+              loader: 'sass-loader',
+              options: {
+                // 使用现代 API 避免 legacy 警告
+                api: 'modern',
+              },
+            },
           ],
         },
 
