@@ -97,6 +97,62 @@ class MyPlugin {
 
 > 注意：在自定义 Plugin 中，通过 `compiler.hooks.emit.tap()` 注册的钩子会接收到 `compilation` 参数，这个 `compilation` 是当前这次构建的编译对象，与 `compiler.compilation` 是同一个对象。
 
+#### 如何快速选择合适的钩子
+
+Webpack 有 40+ 个钩子，不需要全部掌握。以下是快速定位钩子的方法：
+
+**1. 根据构建流程阶段选择**
+
+```
+开始 → 编译 → 生成 → 结束
+  ↓       ↓       ↓      ↓
+run   make   emit   done   ← 最常用的4个钩子
+```
+
+**2. 根据需求场景选择**
+
+| 需求场景 | 推荐钩子 | 说明 |
+|---------|---------|------|
+| 构建完成后处理输出文件 | `emit` | 资源即将写入磁盘前 |
+| 构建完成后执行某些操作 | `done` | 构建完全结束后 |
+| 监听文件变化 | `invalid` | 单次编译开始时 |
+| 处理模块依赖关系 | `buildModule` | 模块构建开始时 |
+| 修改最终产物内容 | `emit` | 可以访问 compilation.assets |
+
+**3. 调试方法：查看所有可用钩子**
+
+```javascript
+class DebugPlugin {
+  apply(compiler) {
+    // 打印所有 Compiler 钩子
+    console.log('Compiler hooks:', Object.keys(compiler.hooks));
+
+    // 打印所有 Compilation 钩子
+    compiler.hooks.compilation.tap('DebugPlugin', (compilation) => {
+      console.log('Compilation hooks:', Object.keys(compilation.hooks));
+    });
+  }
+}
+```
+
+**4. 常用钩子速查表**
+
+| 钩子名称 | 类型 | 触发时机 | 使用频率 |
+|---------|------|---------|---------|
+| `done` | 同步 | 构建完成后 | ★★★★★ |
+| `emit` | 异步 | 输出资源到目录前 | ★★★★★ |
+| `run` | 异步 | 构建开始前 | ★★★☆☆ |
+| `compile` | 同步 | 编译开始前 | ★★★☆☆ |
+| `compilation` | 同步 | 编译对象创建后 | ★★★★☆ |
+| `invalid` | 同步 | 文件变化导致重新编译时 | ★★☆☆☆ |
+| `buildModule` | 同步 | 模块构建开始时 | ★★☆☆☆ |
+
+**5. 实践建议**
+
+- 新手从 `emit` 和 `done` 开始，这两个能满足大部分需求
+- 参考成熟插件的实现，如 HtmlWebpackPlugin、MiniCssExtractPlugin
+- 使用上述调试代码查看项目中实际触发了哪些钩子
+
 ## 依赖包说明
 
 ### 开发依赖
