@@ -372,10 +372,119 @@ pnpm build
 
 ## 课后思考
 
-1. Plugin 和 Loader 有什么区别？分别在什么场景使用？
-2. 如何监听 Webpack 的编译进度？
-3. 如何在 Plugin 中访问编译后的模块信息？
-4. 请尝试编写一个自动生成版本号的 Plugin？
+### 课后思考答案
+
+#### 1. Plugin 和 Loader 有什么区别？分别在什么场景使用？
+
+| 特性 | Loader | Plugin |
+|------|--------|--------|
+| 作用对象 | 单个文件 | 整个构建过程 |
+| 执行时机 | 转换文件时 | 打包过程的关键节点 |
+| 配置方式 | `module.rules` | `plugins` 数组 |
+| 返回值 | 转换后的内容 | 可执行任意操作 |
+
+**使用场景**：
+- **Loader**：需要对文件进行转换时使用，如将 SCSS 转换为 CSS、将 TypeScript 转换为 JavaScript、处理图片等
+- **Plugin**：需要在整个构建过程中执行某些操作时使用，如生成 HTML 文件、提取 CSS 文件、复制文件、定义全局变量等
+
+---
+
+#### 2. 如何监听 Webpack 的编译进度？
+
+使用 `webpack.ProgressPlugin` 或自定义 Plugin 监听钩子：
+
+```javascript
+// 方式1：使用 ProgressPlugin
+new webpack.ProgressPlugin((percentage, message, ...args) => {
+  console.log(`进度: ${(percentage * 100).toFixed(0)}% - ${message}`);
+});
+
+// 方式2：监听 Compiler 钩子
+class ProgressPlugin {
+  apply(compiler) {
+    compiler.hooks.compile.tap('Progress', () => {
+      console.log('开始编译...');
+    });
+    compiler.hooks.done.tap('Progress', (stats) => {
+      console.log('编译完成!');
+    });
+  }
+}
+```
+
+---
+
+#### 3. 如何在 Plugin 中访问编译后的模块信息？
+
+在 `compilation` 钩子中访问：
+
+```javascript
+compiler.hooks.compilation.tap('MyPlugin', (compilation) => {
+  // 获取所有模块
+  const modules = Array.from(compilation.modules);
+
+  // 获取 src 目录下的模块
+  const srcModules = modules.filter(m => m.resource && m.resource.includes('/src/'));
+
+  // 获取 chunk 信息
+  const chunks = Array.from(compilation.chunks);
+});
+```
+
+在 `done` 钩子中通过 `stats` 对象访问：
+
+```javascript
+compiler.hooks.done.tap('MyPlugin', (stats) => {
+  // stats.toJson() 包含完整的构建信息
+  const info = stats.toJson();
+
+  console.log('模块数量:', info.modules.length);
+  console.log('Chunk 数量:', info.chunks.length);
+  console.log('资源文件:', Object.keys(info.assetsByChunkName));
+});
+```
+
+---
+
+#### 4. 请尝试编写一个自动生成版本号的 Plugin？
+
+```javascript
+class VersionPlugin {
+  constructor(options = {}) {
+    this.filename = options.filename || 'version.json';
+  }
+
+  apply(compiler) {
+    compiler.hooks.emit.tap('VersionPlugin', (compilation) => {
+      const version = {
+        version: require('./package.json').version,
+        buildTime: new Date().toISOString(),
+        commitHash: process.env.GIT_COMMIT || 'unknown',
+      };
+
+      compilation.assets[this.filename] = {
+        source: () => JSON.stringify(version, null, 2),
+        size: () => JSON.stringify(version, null, 2).length,
+      };
+
+      console.log(`生成版本文件: ${this.filename}`, version);
+    });
+  }
+}
+```
+
+使用方式：
+
+```javascript
+// webpack.config.js
+plugins: [
+  new VersionPlugin({
+    filename: 'version.json'
+  }),
+]
+```
+
+---
 
 ## 参考资料
 
