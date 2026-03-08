@@ -219,6 +219,20 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
     // 入口文件
     entry: './src/main.ts',
 
+    // ============================================
+    // 缓存配置
+    // ============================================
+    // 开发环境默认是 memory 缓存，重启后丢失
+    // 设置为 filesystem 可启用持久化缓存
+    cache: {
+      type: isProduction ? 'filesystem' : 'filesystem',
+      cacheDirectory: path.resolve(__dirname, 'node_modules/.cache/webpack'),
+      buildDependencies: {
+        // 当配置文件变化时，使缓存失效
+        config: [__filename],
+      },
+    },
+
     // 输出配置
     output: {
       // 输出目录
