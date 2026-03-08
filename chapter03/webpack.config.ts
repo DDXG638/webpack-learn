@@ -68,6 +68,148 @@ class FileListPlugin {
   }
 }
 
+// ============================================
+// 自定义 Plugin 示例：HookDebugPlugin
+// 监控关键 compiler 和 compilation 钩子的执行顺序
+// 仅处理 src/* 目录下的文件，过滤 node_modules
+// ============================================
+class HookDebugPlugin {
+  options: {
+    srcPath: string;
+    enabled: boolean;
+  };
+
+  constructor(options: { srcPath?: string; enabled?: boolean } = {}) {
+    this.options = {
+      srcPath: options.srcPath || path.resolve(__dirname, 'src'),
+      enabled: options.enabled !== false,
+    };
+  }
+
+  // 判断是否为 src 目录下的文件
+  private isSrcFile(filePath: string): boolean {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const srcNormalizedPath = this.options.srcPath.replace(/\\/g, '/');
+    return normalizedPath.startsWith(srcNormalizedPath);
+  }
+
+  // 格式化模块路径显示
+  private formatModulePath(filePath: string): string {
+    if (!filePath) return 'unknown';
+    // 提取相对路径
+    const relativePath = filePath.replace(this.options.srcPath, '').replace(/^[/\\]/, '');
+    return relativePath || filePath.split('/').pop() || filePath;
+  }
+
+  apply(compiler: webpack.Compiler) {
+    if (!this.options.enabled) return;
+
+    const srcPath = this.options.srcPath;
+
+    // ============================================
+    // Compiler 钩子
+    // ============================================
+
+    // entryOption: 在 webpack 配置中的 entry 配置处理完成后调用
+    compiler.hooks.entryOption.tap('HookDebugPlugin', (context, entry) => {
+      console.log('\n🔵 [Compiler] entryOption - 入口配置处理完成');
+      console.log('   Entry points:', Object.keys(entry));
+      return undefined;
+    });
+
+    // run: 开始一次新的编译
+    compiler.hooks.run.tap('HookDebugPlugin', (compiler) => {
+      console.log('\n🟢 [Compiler] run - 开始编译');
+      console.log('   Context:', compiler.context);
+    });
+
+    // compile: 触发一次新的编译（在 run 之后）
+    compiler.hooks.compile.tap('HookDebugPlugin', () => {
+      console.log('\n🟡 [Compiler] compile - 开始编译阶段');
+    });
+
+    // compilation: 创建新的 compilation
+    compiler.hooks.compilation.tap('HookDebugPlugin', (compilation) => {
+      console.log('\n🟠 [Compiler] compilation - 创建新编译对象');
+
+      // ============================================
+      // Compilation 钩子
+      // ============================================
+
+      // buildModule: 模块开始构建
+      compilation.hooks.buildModule.tap('HookDebugPlugin', (module: any) => {
+        if (module.resource && this.isSrcFile(module.resource)) {
+          console.log('   📦 [Compilation] buildModule - 构建模块:', this.formatModulePath(module.resource));
+        }
+      });
+
+      // rebuildModule: 模块重新构建
+      compilation.hooks.rebuildModule.tap('HookDebugPlugin', (module: any) => {
+        if (module.resource && this.isSrcFile(module.resource)) {
+          console.log('   🔄 [Compilation] rebuildModule - 重新构建模块:', this.formatModulePath(module.resource));
+        }
+      });
+
+      // succeedModule: 模块构建成功
+      compilation.hooks.succeedModule.tap('HookDebugPlugin', (module: any) => {
+        if (module.resource && this.isSrcFile(module.resource)) {
+          console.log('   ✅ [Compilation] succeedModule - 模块构建成功:', this.formatModulePath(module.resource));
+        }
+      });
+
+      // finishModules: 所有模块构建完成
+      compilation.hooks.finishModules.tap('HookDebugPlugin', (modules: Iterable<any>) => {
+        console.log('\n   🎯 [Compilation] finishModules - 所有模块构建完成');
+        const srcModules = Array.from(modules).filter((m: any) => m.resource && this.isSrcFile(m.resource));
+        if (srcModules.length > 0) {
+          console.log('   涉及的 src 模块:');
+          srcModules.forEach((m: any) => {
+            console.log('      -', this.formatModulePath(m.resource));
+          });
+        }
+      });
+
+      // chunkAsset: Chunk 资源被添加到 compilation
+      compilation.hooks.chunkAsset.tap('HookDebugPlugin', (chunk, filename) => {
+        console.log('   📄 [Compilation] chunkAsset - Chunk 资源生成:', filename);
+        // 找出这个 chunk 包含的模块
+        const modules = Array.from(chunk.getModules());
+        const srcModules = modules.filter((m: any) => m.resource && this.isSrcFile(m.resource));
+        if (srcModules.length > 0) {
+          console.log('      包含的 src 模块:');
+          srcModules.forEach((m: any) => {
+            console.log('         -', this.formatModulePath(m.resource));
+          });
+        }
+      });
+    });
+
+    // emit: 在生成资源并输出到目录之前
+    compiler.hooks.emit.tap('HookDebugPlugin', (compilation) => {
+      console.log('\n🔵 [Compiler] emit - 生成输出资源');
+      console.log('   输出文件列表:');
+      Object.keys(compilation.assets).forEach(asset => {
+        const size = compilation.assets[asset].size();
+        console.log(`      - ${asset} (${(size / 1024).toFixed(2)} KB)`);
+      });
+    });
+
+    // assetEmitted: 资源已生成
+    compiler.hooks.assetEmitted.tap('HookDebugPlugin', (file, { content, source, outputPath, targetPath }) => {
+      console.log('   📤 [Compiler] assetEmitted - 资源已输出:', file);
+    });
+
+    // done: 编译完成
+    compiler.hooks.done.tap('HookDebugPlugin', (stats) => {
+      console.log('\n🏁 [Compiler] done - 编译完成');
+      console.log('   编译结果:', stats.hasErrors() ? '有错误 ❌' : '成功 ✅');
+      console.log('   总模块数:', stats.compilation.modules.size);
+      console.log('   总 chunks 数:', stats.compilation.chunks.size);
+      console.log('   总资源数:', Object.keys(stats.compilation.assets).length);
+    });
+  }
+}
+
 export default (env: Record<string, string | undefined>, argv: Record<string, string | undefined>) => {
   // 获取当前模式
   const mode = (argv.mode || 'development') as 'development' | 'production' | 'none';
@@ -252,6 +394,15 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       // 作用：生成文件列表 JSON
       // ============================================
       new FileListPlugin(),
+
+      // ============================================
+      // 8. HookDebugPlugin (自定义)
+      // 作用：监控关键钩子执行顺序和模块变化
+      // ============================================
+      new HookDebugPlugin({
+        srcPath: path.resolve(__dirname, 'src'),
+        enabled: true,
+      }),
     ],
 
     // 开发服务器配置
