@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { reportPV } from '@/utils/report'
 
 // 从 DefinePlugin 注入的全局变量
 const appName = __APP_NAME__;
@@ -119,6 +120,7 @@ const showAlert = () => {
 onMounted(() => {
   console.log('App 组件已挂载');
   console.log('Feature Flags:', featureFlags);
+  reportPV();
 });
 </script>
 
