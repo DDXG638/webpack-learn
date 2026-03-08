@@ -4,13 +4,6 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { VueLoaderPlugin } from 'vue-loader';
 import webpack from 'webpack';
-import type { Configuration } from 'webpack';
-import type { Entry } from 'webpack';
-import type { Output } from 'webpack';
-import type { Module } from 'webpack';
-import type { Plugins } from 'webpack';
-import type { Resolve } from 'webpack';
-import type { DevServer } from 'webpack-dev-server';
 
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -45,7 +38,7 @@ class BannerPlugin {
           compilation.assets[filename] = {
             source: () => banner + source,
             size: () => banner.length + source.length,
-          };
+          } as unknown as webpack.sources.Source;
         }
       });
     });
@@ -70,14 +63,14 @@ class FileListPlugin {
       compilation.assets['file-list.json'] = {
         source: () => JSON.stringify(fileList, null, 2),
         size: () => JSON.stringify(fileList, null, 2).length,
-      };
+      } as unknown as webpack.sources.Source;
     });
   }
 }
 
-export default (env: Record<string, string | undefined>, argv: Record<string, string | undefined>): Configuration => {
+export default (env: Record<string, string | undefined>, argv: Record<string, string | undefined>) => {
   // 获取当前模式
-  const mode = argv.mode || 'development';
+  const mode = (argv.mode || 'development') as 'development' | 'production' | 'none';
   const isProduction = mode === 'production';
 
   return {
@@ -94,7 +87,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       assetModuleFilename: 'assets/[hash][ext][query]',
       // 清除输出目录
       clean: true,
-    } as Output,
+    },
 
     // 解析配置
     resolve: {
@@ -104,7 +97,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },
-    } as Resolve,
+    },
 
     // 模块规则
     module: {
@@ -171,7 +164,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
           },
         },
       ],
-    } as Module,
+    },
 
     // ============================================
     // 插件配置
@@ -259,7 +252,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       // 作用：生成文件列表 JSON
       // ============================================
       new FileListPlugin(),
-    ] as Plugins,
+    ],
 
     // 开发服务器配置
     devServer: {
@@ -270,7 +263,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       port: 8080,
       hot: true,
       open: true,
-    } as DevServer,
+    },
 
     // 模式
     mode: mode,
