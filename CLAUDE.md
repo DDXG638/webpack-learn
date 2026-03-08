@@ -15,7 +15,7 @@
 **主要内容**：
 - Webpack定义和核心理念
 - Webpack5新特性介绍
-- webpack.config.js基础结构
+- webpack.config.ts基础结构
 - entry、output、mode等核心配置
 - 打包输出文件分析
 
@@ -146,7 +146,7 @@ chapterXX/
 ├── public/
 │   └── index.html
 ├── README.MD
-├── webpack.config.js
+├── webpack.config.ts
 ├── tsconfig.json
 └── package.json
 ```

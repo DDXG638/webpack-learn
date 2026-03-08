@@ -4,6 +4,13 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { VueLoaderPlugin } from 'vue-loader';
 import webpack from 'webpack';
+import type { Configuration } from 'webpack';
+import type { Entry } from 'webpack';
+import type { Output } from 'webpack';
+import type { Module } from 'webpack';
+import type { Plugins } from 'webpack';
+import type { Resolve } from 'webpack';
+import type { DevServer } from 'webpack-dev-server';
 
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -14,11 +21,13 @@ const __dirname = path.dirname(__filename);
 // 在每个生成的 JS 文件头部添加版权信息
 // ============================================
 class BannerPlugin {
-  constructor(options) {
-    this.options = options || {};
+  options: { banner?: string };
+
+  constructor(options: { banner?: string } = {}) {
+    this.options = options;
   }
 
-  apply(compiler) {
+  apply(compiler: webpack.Compiler) {
     // 使用 emit 钩子，在生成资源并输出到目录之前执行
     compiler.hooks.emit.tap('BannerPlugin', (compilation) => {
       // 遍历所有生成的资源文件
@@ -29,7 +38,8 @@ class BannerPlugin {
           const banner = `/*!
  * ${this.options.banner || 'Custom Banner'}
  * Generated at: ${new Date().toISOString()}
- */\n`;
+ */
+`;
 
           // 更新资源内容
           compilation.assets[filename] = {
@@ -47,7 +57,7 @@ class BannerPlugin {
 // 生成一个包含所有输出文件列表的 JSON 文件
 // ============================================
 class FileListPlugin {
-  apply(compiler) {
+  apply(compiler: webpack.Compiler) {
     compiler.hooks.emit.tap('FileListPlugin', (compilation) => {
       const files = Object.keys(compilation.assets).sort();
       const fileList = {
@@ -65,7 +75,7 @@ class FileListPlugin {
   }
 }
 
-export default (env, argv) => {
+export default (env: Record<string, string | undefined>, argv: Record<string, string | undefined>): Configuration => {
   // 获取当前模式
   const mode = argv.mode || 'development';
   const isProduction = mode === 'production';
@@ -84,7 +94,7 @@ export default (env, argv) => {
       assetModuleFilename: 'assets/[hash][ext][query]',
       // 清除输出目录
       clean: true,
-    },
+    } as Output,
 
     // 解析配置
     resolve: {
@@ -94,7 +104,7 @@ export default (env, argv) => {
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },
-    },
+    } as Resolve,
 
     // 模块规则
     module: {
@@ -161,7 +171,7 @@ export default (env, argv) => {
           },
         },
       ],
-    },
+    } as Module,
 
     // ============================================
     // 插件配置
@@ -249,7 +259,7 @@ export default (env, argv) => {
       // 作用：生成文件列表 JSON
       // ============================================
       new FileListPlugin(),
-    ],
+    ] as Plugins,
 
     // 开发服务器配置
     devServer: {
@@ -260,7 +270,7 @@ export default (env, argv) => {
       port: 8080,
       hot: true,
       open: true,
-    },
+    } as DevServer,
 
     // 模式
     mode: mode,
