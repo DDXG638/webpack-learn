@@ -106,6 +106,9 @@ class HookDebugPlugin {
 
     const srcPath = this.options.srcPath;
 
+    // 用于记录本次编译中实际构建的模块
+    let builtModules: Set<string> = new Set();
+
     // ============================================
     // Compiler 钩子
     // ============================================
@@ -121,6 +124,8 @@ class HookDebugPlugin {
     compiler.hooks.run.tap('HookDebugPlugin', (compiler) => {
       console.log('\n🟢 [Compiler] run - 开始编译');
       console.log('   Context:', compiler.context);
+      // 重置构建记录
+      builtModules = new Set();
     });
 
     // compile: 触发一次新的编译（在 run 之后）
@@ -139,6 +144,8 @@ class HookDebugPlugin {
       // buildModule: 模块开始构建
       compilation.hooks.buildModule.tap('HookDebugPlugin', (module: any) => {
         if (module.resource && this.isSrcFile(module.resource)) {
+          // 记录实际构建的模块
+          builtModules.add(this.formatModulePath(module.resource));
           console.log('   📦 [Compilation] buildModule - 构建模块:', this.formatModulePath(module.resource));
         }
       });
@@ -164,7 +171,11 @@ class HookDebugPlugin {
         if (srcModules.length > 0) {
           console.log('   涉及的 src 模块:');
           srcModules.forEach((m: any) => {
-            console.log('      -', this.formatModulePath(m.resource));
+            const modulePath = this.formatModulePath(m.resource);
+            // 判断模块是否来自缓存：检查是否在本次编译中执行了 buildModule
+            const isFromCache = !builtModules.has(modulePath);
+            const cacheIcon = isFromCache ? '💾' : '🆕';
+            console.log(`      ${cacheIcon} ${modulePath}${isFromCache ? ' (cached)' : ''}`);
           });
         }
       });
