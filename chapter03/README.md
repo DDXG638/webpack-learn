@@ -262,7 +262,7 @@ new webpack.DefinePlugin({
 
 ### 5. 自定义 Plugin
 
-本项目包含两个自定义 Plugin 示例：
+本项目包含三个自定义 Plugin 示例：
 
 #### BannerPlugin
 - 在每个 JS 文件头部添加版权信息
@@ -271,6 +271,12 @@ new webpack.DefinePlugin({
 #### FileListPlugin
 - 生成打包文件列表 JSON
 - 用于分析构建产物
+
+#### HookDebugPlugin
+- 监控关键编译钩子的执行顺序
+- 显示 src 目录下模块的构建状态
+- 显示模块是否来自缓存
+- 用于学习和调试 Webpack 构建流程
 
 ## 关键配置解析
 
@@ -377,3 +383,135 @@ pnpm build
 - [HtmlWebpackPlugin](https://github.com/jantimon/html-webpack-plugin)
 - [MiniCssExtractPlugin](https://github.com/webpack-contrib/mini-css-extract-plugin)
 - [Tapable](https://webpack.js.org/api/tapable/)
+
+## 答疑模块
+
+### Q1: buildModule 钩子被多次调用，与 loader 数量有关吗？
+
+**问题描述**：同一个文件会进入 `buildModule` 钩子多次，例如 CSS 文件进入 2 次，SCSS 文件进入 3 次。
+
+**原因分析**：这与 loader 链有关。Webpack 会为每个 loader 创建一个 module 实例，所以同一个文件会被构建多次。
+
+**示例说明**（基于本项目配置）：
+
+**CSS 文件（styles/main.css）进入 buildModule 2 次**：
+```
+第1次: mini-css-extract-plugin → css-loader
+第2次: css-loader
+```
+
+**SCSS 文件（App.vue 的 style）进入 buildModule 3 次**：
+```
+第1次: vue-loader(pitcher) → mini-css-extract-plugin → css-loader → sass-loader → vue-loader
+第2次: mini-css-extract-plugin → css-loader → sass-loader → vue-loader(stylePostLoader) → vue-loader
+第3次: css-loader → sass-loader → vue-loader(stylePostLoader) → vue-loader
+```
+
+**原因详解**：
+
+1. **每个 loader 会创建一个 module 实例** - Webpack 为 loader 链中的每个 loader 创建独立的 module
+
+2. **Vue 单文件组件的特殊处理** - vue-loader 会将 `.vue` 文件的 `<script>`、`<template>`、`<style>` 拆分成多个虚拟模块
+
+3. **pitcher 和 stylePostLoader** - vue-loader 使用了 pitcher（pitch 阶段）和 stylePostLoader（处理样式后的阶段），增加了额外的构建步骤
+
+**注意事项**：这是正常的构建行为，不用担心性能问题，因为文件系统缓存会帮助加速后续构建。可以通过观察 HookDebugPlugin 的输出来验证缓存效果。
+
+---
+
+### Q2: 开发模式下为什么没有 node_modules/.cache/webpack 缓存目录？
+
+**问题描述**：按照官方文档，Webpack5 默认在 `node_modules/.cache/webpack` 存放缓存，但开发模式下没有看到这个目录。
+
+**原因分析**：Webpack5 在不同模式下默认使用不同的缓存类型：
+
+| 模式 | 默认缓存类型 | 缓存位置 |
+|------|-------------|----------|
+| `development` | `memory` | 内存中，重启后丢失 |
+| `production` | `filesystem` | 磁盘 |
+
+所以开发模式下看不到缓存目录是正常现象，因为默认使用内存缓存。
+
+**解决方案**：如果需要在开发环境也使用持久化缓存，可以在配置中显式开启：
+
+```typescript
+cache: {
+  type: 'filesystem',
+  cacheDirectory: path.resolve(__dirname, 'node_modules/.cache/webpack'),
+  buildDependencies: {
+    config: [__filename], // 配置文件变化时使缓存失效
+  },
+},
+```
+
+---
+
+### Q3: 如何判断模块是否来自缓存？
+
+**问题描述**：在 `finishModules` 钩子中，如何知道某个模块是来自缓存还是重新构建的？
+
+**解决方案**：可以通过记录 `buildModule` 钩子中实际构建的模块来判断。在 `buildModule` 钩子中记录构建的模块，然后在 `finishModules` 中对比：
+
+```typescript
+// 记录本次构建中实际构建的模块
+let builtModules: Set<string> = new Set();
+
+compilation.hooks.buildModule.tap('HookDebugPlugin', (module: any) => {
+  if (module.resource && this.isSrcFile(module.resource)) {
+    builtModules.add(this.formatModulePath(module.resource));
+  }
+});
+
+compilation.hooks.finishModules.tap('HookDebugPlugin', (modules) => {
+  const srcModules = Array.from(modules).filter(m => m.resource && this.isSrcFile(m.resource));
+  srcModules.forEach(m => {
+    const modulePath = this.formatModulePath(m.resource);
+    // 判断是否在本次构建中执行了 buildModule
+    const isFromCache = !builtModules.has(modulePath);
+    console.log(`${isFromCache ? '💾 (cached)' : '🆕'} ${modulePath}`);
+  });
+});
+```
+
+**显示效果**：
+```
+涉及的 src 模块:
+   🆕 main.ts
+   💾 App.vue (cached)
+   💾 styles/main.css (cached)
+   💾 utils/report.ts (cached)
+```
+
+---
+
+### Q4: HookDebugPlugin 有什么作用？
+
+**问题描述**：项目中自定义的 HookDebugPlugin 插件有什么作用？
+
+**功能说明**：HookDebugPlugin 是一个用于调试的插件，可以监控 Webpack 关键钩子的执行顺序和模块变化。
+
+**监控的钩子**：
+
+**Compiler 钩子**：
+- `entryOption` - 入口配置处理完成
+- `run` - 开始编译
+- `compile` - 开始编译阶段
+- `compilation` - 创建新编译对象
+- `emit` - 生成输出资源
+- `assetEmitted` - 资源已输出
+- `done` - 编译完成
+
+**Compilation 钩子**：
+- `buildModule` - 模块开始构建
+- `rebuildModule` - 模块重新构建
+- `succeedModule` - 模块构建成功
+- `finishModules` - 所有模块构建完成
+- `chunkAsset` - Chunk 资源生成
+
+**功能特点**：
+1. 只显示 `src/*` 目录下的模块，过滤 `node_modules`
+2. 显示每个钩子的执行时机和涉及的模块路径
+3. 显示模块的缓存状态（新构建/缓存）
+4. 输出文件大小信息
+
+**使用方式**：插件已集成在 `webpack.config.ts` 中，运行 `pnpm build` 或 `pnpm dev` 即可看到钩子执行日志。
