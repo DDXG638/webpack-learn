@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const mode = import.meta.env.MODE || 'development';
+const mode = process.env.NODE_ENV || 'development';
 const version = __APP_VERSION__;
 const message = ref('');
 
