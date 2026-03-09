@@ -49,6 +49,7 @@ Webpack5 内置的资源处理能力：
 | css-loader/style-loader/sass-loader | CSS/SCSS 处理 |
 | postcss-loader | PostCSS 处理 |
 | postcss-preset-env | 现代 CSS 转换（包含 autoprefixer） |
+| cssnano | CSS 压缩优化（生产环境） |
 | html-webpack-plugin | HTML 插件 |
 | mini-css-extract-plugin | CSS 提取插件 |
 
@@ -78,11 +79,32 @@ Webpack5 内置的资源处理能力：
 
 ```javascript
 // postcss.config.js
-module.exports = {
-  plugins: [
-    require('postcss-preset-env')
-  ]
-}
+module.exports = (ctx) => {
+  return {
+    plugins: [
+      require('postcss-preset-env'),
+      // 仅在生产环境启用 CSS 压缩
+      ctx.env === 'production' ? require('cssnano')({ preset: 'default' }) : false,
+    ].filter(Boolean),
+  };
+};
+```
+
+#### Browserslist 配置文件
+
+用于指定目标浏览器范围，postcss-preset-env 中的 autoprefixer 会根据此配置添加浏览器前缀：
+
+```ini
+# .browserslistrc
+[production]
+> 0.5%
+last 2 versions
+Firefox ESR
+not dead
+
+[development]
+last 1 chrome version
+last 1 firefox version
 ```
 
 ### 3. 资源模块配置
