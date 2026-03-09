@@ -1,0 +1,36 @@
+{
+  "name": "chapter05",
+  "version": "1.0.0",
+  "description": "Webpack5 CSS处理和资源管理 Demo",
+  "private": true,
+  "scripts": {
+    "dev": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "start": "webpack serve --mode development --open"
+  },
+  "dependencies": {
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "@vue/compiler-sfc": "^3.5.13",
+    "autoprefixer": "^10.4.21",
+    "css-loader": "^6.11.0",
+    "esbuild": "^0.27.3",
+    "esbuild-register": "^3.6.0",
+    "html-webpack-plugin": "^5.6.3",
+    "mini-css-extract-plugin": "^2.9.2",
+    "postcss": "^8.4.49",
+    "postcss-loader": "^8.1.1",
+    "sass": "^1.83.4",
+    "sass-loader": "^16.0.4",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "vue-loader": "^17.4.2",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.2.0"
+  }
+}
