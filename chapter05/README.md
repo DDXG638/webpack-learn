@@ -160,9 +160,28 @@ pnpm build
 ## 课后思考
 
 1. CSS Modules 如何解决样式冲突问题？
+   答：通过将 CSS 类名自动哈希化为唯一标识符，实现样式作用域隔离。例如 `.button` 会被编译为 `Button__button__abc123`，不同模块中的同名类名不会冲突。
+
 2. PostCSS 和预处理器（如 SCSS）的区别是什么？
+   答：
+   - **预处理器（SCSS/SASS/Less）**：在构建前处理，提供变量、嵌套、混合宏等语法，最终需要编译为标准 CSS
+   - **PostCSS**：在构建后处理（CSS 转换为 CSS），通过插件实现功能扩展，如添加前缀、压缩、语法转换等
+   - 两者可以配合使用：SCSS 编译后的 CSS 再经过 PostCSS 处理
+
 3. 资源模块的 `maxSize` 配置对性能有什么影响？
+   答：
+   - **值越小**：更多资源转为 Base64 内联，减少 HTTP 请求次数，但会增加 JS bundle 体积
+   - **值越大**：更多资源生成独立文件，减少 bundle 体积，但增加 HTTP 请求次数
+   - 建议：8KB 以下的图片内联，较大的图片独立加载
+
 4. 如何配置让字体文件也使用资源模块处理？
+   答：使用 webpack 内置的 `asset/resource` 类型：
+   ```typescript
+   {
+     test: /\.(woff|woff2|eot|ttf|otf)$/i,
+     type: 'asset/resource',
+   }
+   ```
 
 ## 参考资料
 
