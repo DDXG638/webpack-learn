@@ -371,6 +371,49 @@ location ~* \.map$ {
 | .map 文件加入 `.gitignore` | 不提交到仓库 |
 | 通过 VPN/内网访问 | 需要时手动调试 |
 
+### Q: import.meta.env 与 process.env 有什么区别?
+
+**A:** 两者是不同环境变量机制，可以简单理解为：
+
+| 特性 | `import.meta.env` | `process.env` |
+|------|------------------|--------------|
+| **来源** | Vite / ES Module | Node.js / Webpack |
+| **语法** | ES Module 原生 | Node.js 全域对象 |
+| **TypeScript** | 原生类型支持 | 需手动声明 |
+
+#### 都可以用 DefinePlugin 设置吗？
+
+**可以**，两种方式都能设置：
+
+```ts
+// webpack.config.ts
+new webpack.DefinePlugin({
+  // process.env 方式
+  'process.env.NODE_ENV': JSON.stringify(mode),
+  'process.env.API_URL': JSON.stringify('https://api.example.com'),
+
+  // import.meta.env 方式（等价写法）
+  'import.meta.env.NODE_ENV': JSON.stringify(mode),
+  'import.meta.env.API_URL': JSON.stringify('https://api.example.com'),
+})
+```
+
+#### 实际使用
+
+```js
+// Webpack 项目
+console.log(process.env.VUE_APP_TITLE)  // ✅
+
+// Vite 项目
+console.log(import.meta.env.VITE_APP_TITLE)  // ✅
+```
+
+#### 注意事项
+
+1. **`process.env`** 在浏览器中实际不存在，DefinePlugin 会做**字符串替换**
+2. **`import.meta`** 是 ES Module 原生特性，更符合现代标准
+3. **不能混用**：`import.meta.env.XXX` ≠ `process.env.XXX`
+
 ## 参考资料
 
 - [webpack-dev-server 文档](https://webpack.js.org/configuration/dev-server/)
