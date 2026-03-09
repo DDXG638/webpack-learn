@@ -414,6 +414,129 @@ console.log(import.meta.env.VITE_APP_TITLE)  // ✅
 2. **`import.meta`** 是 ES Module 原生特性，更符合现代标准
 3. **不能混用**：`import.meta.env.XXX` ≠ `process.env.XXX`
 
+### Q: HMR 热更新的完整流程是什么？Client 如何判断刷新还是局部更新？
+
+**A:** HMR 热更新的完整流程如下：
+
+#### 1. 文件变化检测
+
+webpack 使用 chokidar 监听文件变化，检测到变化后触发增量编译。
+
+#### 2. 生成 .hot-update 文件
+
+webpack 编译完成后生成更新文件：
+- `main.hot-update.json` - 更新信息（hash、变化的 chunk）
+- `main.hot-update.js` - 新的模块代码
+
+#### 3. WebSocket 通知 Client
+
+webpack-dev-server 通过 WebSocket 推送消息给浏览器：
+```js
+{
+  type: 'hash',
+  data: { hash: 'a1b2c3d4', modules: ['./src/App.vue'] }
+}
+```
+
+#### 4. Client 判断处理
+
+```js
+if (module.hot) {
+  // 支持 HMR，尝试局部更新
+  module.hot.apply((err, updatedModules) => {
+    if (err) {
+      window.location.reload();  // 更新失败，刷新页面
+    } else {
+      // 更新成功，Vue 组件重新渲染
+    }
+  });
+} else {
+  // 不支持 HMR，刷新页面
+  window.location.reload();
+}
+```
+
+#### 5. Vue 组件局部更新
+
+Vue 通过 `vue-loader` 内置的 HMR 支持：
+- 重新渲染组件（re-render）
+- Vue 比对新旧 VNode，只更新变化的 DOM
+- 保留组件状态（表单输入、滚动位置等）
+
+#### Vue 特殊支持
+
+Vue 框架已内置 HMR 支持，但 Vuex/Pinia 等状态管理需要手动处理：
+```js
+// Vuex 手动 HMR 支持
+if (module.hot) {
+  module.hot.accept('./store', () => {
+    store.replaceState(require('./store').default.state);
+  });
+}
+```
+
+### Q: CSS 热更新原理是什么？webpack 如何找到对应的 `<style>` 标签并替换内容？
+
+**A:** CSS 热更新机制如下：
+
+#### 1. style-loader 注入 HMR 代码
+
+`style-loader` 在插入 CSS 时会：
+- 创建 `<style>` 标签并添加到 `<head>`
+- 给标签添加唯一标识（`data-hash`、`data-module-id`）
+- 注入 `module.hot.accept` 回调
+
+#### 2. CSS 模块的 HMR 处理
+
+```js
+// 浏览器中的处理逻辑
+module.hot.accept('./src/styles/main.css', function() {
+  // 重新获取新的 CSS 内容
+  var newCss = require('./src/styles/main.css');
+
+  // 通过 data 属性找到对应的 style 标签
+  var oldStyle = document.querySelector(
+    'style[data-module-id="./src/styles/main.css"]'
+  );
+
+  // 替换内容，不刷新页面
+  if (oldStyle) {
+    oldStyle.textContent = newCss.toString();
+  }
+});
+```
+
+#### 3. 实际 DOM 结构
+
+```html
+<head>
+  <style type="text/css"
+          data-hash="a1b2c3d4"
+          data-module-id="./src/styles/main.css">
+    .title { color: red; }
+  </style>
+</head>
+```
+
+#### CSS vs JS 热更新对比
+
+| 特性 | CSS 热更新 | JS/Vue 热更新 |
+|------|-----------|---------------|
+| 更新方式 | 替换 `<style>` 标签内容 | 重新执行模块代码 |
+| 保留状态 | ✅ 完全保留 | ✅ 组件状态保留 |
+| 框架依赖 | style-loader 内置 | 需要框架特殊支持 |
+
+#### 生产环境注意
+
+使用 `MiniCssExtractPlugin` 时，**不支持 HMR**：
+```js
+// 开发环境 - 支持 HMR
+use: ['vue-style-loader', 'css-loader']
+
+// 生产环境 - 不支持 HMR
+use: [MiniCssExtractPlugin.loader, 'css-loader']
+```
+
 ## 参考资料
 
 - [webpack-dev-server 文档](https://webpack.js.org/configuration/dev-server/)
