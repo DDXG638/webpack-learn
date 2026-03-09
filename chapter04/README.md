@@ -243,6 +243,73 @@ pnpm build
 
 这样避免了浏览器直接请求后端导致的跨域问题。
 
+## 答疑模块
+
+### Q: 浏览器是如何加载 sourceMap 文件的？浏览器怎么知道当前网站有 sourceMap 文件？
+
+**A:** sourceMap 的加载机制如下：
+
+1. **webpack 自动注入注释**
+
+webpack 在打包后的 JS/CSS 文件末尾自动添加一行特殊注释：
+
+```js
+//# sourceMappingURL=main.xxx.js.map
+```
+
+2. **浏览器自动检测和请求**
+
+浏览器解析 JS/CSS 文件时，会自动检测文件末尾的 `sourceMappingURL` 注释，然后发起第二个 HTTP 请求获取 `.map` 文件。
+
+3. **Source Map 文件结构**
+
+```json
+{
+  "version": 3,
+  "sources": ["App.vue", "main.ts", "utils/helper.ts"],
+  "names": ["add", "result", "console"],
+  "mappings": "AAAA,OAAQ,CAAC...",
+  "file": "main.js",
+  "sourcesContent": [...]
+}
+```
+
+### Q: 如何确认 sourceMap 已成功加载？
+
+**A:** 在 Chrome DevTools 的 Sources 面板中有明确的视觉提示：
+
+1. **左侧文件树变化**
+
+```
+Sources 面板:
+├── (no domain)           ← 打包后的文件
+│   └── main.xxx.js
+│
+└── page                  ← sourceMap 加载成功的标志！
+    ├── src/              ← 原始源代码目录
+    │   ├── App.vue
+    │   ├── main.ts
+    │   └── components/
+    └── dist/             ← 可折叠的打包文件
+```
+
+2. **关键特征**
+
+- 出现 `page` 文件夹
+- 显示原始目录结构（src/、components/ 等）
+- 文件名是原始名称（`App.vue`），而非 `main.abc123.js`
+
+3. **文件图标区别**
+
+| 图标 | 含义 |
+|------|------|
+| 📄 灰色文件图标 | 打包后的文件 |
+| 🌐 Vue/TS/JS 文件图标 | 原始源代码（通过 sourceMap 映射） |
+
+4. **验证方法**
+
+打开 DevTools → Sources 面板，如果能看到带颜色高亮的 Vue/TypeScript 源码（而非压缩的 JS），说明 sourceMap 已成功加载。
+
 ## 参考资料
 
 - [webpack-dev-server 文档](https://webpack.js.org/configuration/dev-server/)
