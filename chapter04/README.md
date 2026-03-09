@@ -310,6 +310,67 @@ Sources 面板:
 
 打开 DevTools → Sources 面板，如果能看到带颜色高亮的 Vue/TypeScript 源码（而非压缩的 JS），说明 sourceMap 已成功加载。
 
+### Q: 生产环境如何安全地使用 sourceMap 排查 bug？
+
+**A:** 生产环境需要在**安全性**和**可调试性**之间平衡，以下是几种常用方案：
+
+#### 方案1：hidden-source-map + 私有服务器（推荐）
+
+webpack 配置：
+
+```ts
+// 生产环境
+devtool: 'hidden-source-map',
+```
+
+这会生成 `.map` 文件，但**不会**在 bundle 中添加 `sourceMappingURL` 注释。
+
+使用方式：
+
+1. 将 `.map` 文件上传到**内网私有服务器**
+2. 在 Chrome DevTools Settings 中手动指定 Source Map URL：
+   ```
+   http://内部map服务器/main.xxx.js.map
+   ```
+
+#### 方案2：使用错误监控系统（最推荐）
+
+以 **Sentry** 为例：
+
+1. 上传 sourceMap 到 Sentry：
+
+```bash
+# 安装 sentry-cli
+pnpm add -D @sentry/cli
+
+# 上传（CI/CD 中执行）
+sentry-cli releases files VERSION upload-sourcemaps --url-prefix '~/dist' ./dist
+```
+
+2. Sentry 会自动关联 sourceMap，在控制台显示原始代码位置
+
+其他类似工具：LogRocket、Bugsnag、Rollbar
+
+#### 方案3：Nginx 内网限制
+
+```nginx
+# 只允许内网访问 .map
+location ~* \.map$ {
+    allow 10.0.0.0/8;
+    allow 172.16.0.0/12;
+    deny all;
+}
+```
+
+#### 最佳实践
+
+| 操作 | 说明 |
+|------|------|
+| 默认使用 `hidden-source-map` | 不暴露 .map 文件 |
+| 上传到错误监控系统 | Sentry 自动处理 |
+| .map 文件加入 `.gitignore` | 不提交到仓库 |
+| 通过 VPN/内网访问 | 需要时手动调试 |
+
 ## 参考资料
 
 - [webpack-dev-server 文档](https://webpack.js.org/configuration/dev-server/)
