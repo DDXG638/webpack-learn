@@ -6,7 +6,7 @@ import { VueLoaderPlugin } from 'vue-loader';
 import webpack from 'webpack';
 // webpack-bundle-analyzer 是 CommonJS 导出，使用默认导入
 // @ts-ignore webpack-bundle-analyzer 缺少类型声明
-import BundleAnalyzerPlugin from 'webpack-bundle-analyzer';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -95,7 +95,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
 
           // vue: 单独分割 Vue 框架代码
           vue: {
-            test: /[\\/]node_modules[\\/](vue|vue-router|vuex)[\\/]/,
+            test: /[\\/]node_modules[\\/](@vue|vue-router|vuex)[\\/]/,
             name: 'vue-vendor',
             priority: 20,
             reuseExistingChunk: true,
