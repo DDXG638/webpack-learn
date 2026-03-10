@@ -106,6 +106,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
           },
 
           // styles: 提取样式文件
+          // 告诉 webpack 忽略 splitChunks.minSize、splitChunks.minChunks、splitChunks.maxAsyncRequests 和 splitChunks.maxInitialRequests 选项，并始终为此缓存组创建 chunk。
           styles: {
             name: 'styles',
             test: /\.css$/,
