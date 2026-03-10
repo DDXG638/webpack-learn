@@ -235,10 +235,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       open: true,
       hot: true,
       compress: true,
-      historyApiFallback: {
-        // 指定默认返回的 HTML 文件
-        index: '/index.html',
-      },
+      historyApiFallback: true,
       client: {
         overlay: {
           errors: true,
