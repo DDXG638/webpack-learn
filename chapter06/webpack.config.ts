@@ -94,12 +94,22 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
           },
 
           // vue: 单独分割 Vue 框架代码
-          // 注意：cacheGroups 中的 maxSize 不会覆盖外层的 maxSize（这是 Webpack 的设计行为）
-          vue: {
-            test: /[\\/]node_modules[\\/](@vue|vue-router|vuex)[\\/]/,
-            name: 'vue-vendor',
-            priority: 20,
+          // 使用多个 cacheGroups 来分别匹配不同的 Vue 模块，实现精确分割
+          // vue-runtime-core: 单独分割 @vue/runtime-core
+          vueRuntimeCore: {
+            test: /[\\/]node_modules[\\/]@vue[\\/]runtime-core[\\/]/,
+            name: 'vue-runtime-core',
+            priority: 25,
             reuseExistingChunk: true,
+          },
+          // vue-others: 分割其他 Vue 模块
+          vueOthers: {
+            test: /[\\/]node_modules[\\/](@vue[\\/](reactivity|runtime-dom|shared)|vue-router)[\\/]/,
+            name: 'vue-others',
+            priority: 25,
+            reuseExistingChunk: true,
+            // maxSize尽量设置大一点，让这4个vue相关的依赖都打进一个包中
+            maxSize: 300000,
           },
 
           // styles: 提取样式文件
