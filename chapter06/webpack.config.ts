@@ -234,13 +234,8 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       hot: true,
       compress: true,
       historyApiFallback: {
-        // 所有路由都返回 index.html
-        rewrites: [
-          {
-            from: /./,
-            to: '/index.html',
-          },
-        ],
+        // 指定默认返回的 HTML 文件
+        index: '/index.html',
       },
       client: {
         overlay: {
