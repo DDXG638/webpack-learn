@@ -132,6 +132,19 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
         {
           test: /\.vue$/,
           loader: 'vue-loader',
+          options: {
+            compilerOptions: {
+              // 启用 source map 以便在浏览器中查看 Vue 源代码
+              sourceMap: !isProduction,
+            },
+          },
+        },
+
+        // source-map-loader 处理 Vue 组件的 source map
+        {
+          test: /\.vue$/,
+          loader: 'source-map-loader',
+          enforce: 'pre',
         },
 
         // TypeScript Loader
@@ -141,6 +154,8 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
           options: {
             appendTsSuffixTo: [/\.vue$/],
             transpileOnly: true,
+            // 启用 source map
+            sourceMap: !isProduction,
           },
           exclude: /node_modules/,
         },
