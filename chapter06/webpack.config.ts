@@ -39,6 +39,8 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
     // 输出配置
     output: {
       path: path.resolve(__dirname, 'dist'),
+      // 使用绝对路径，避免相对路径导致的资源 404 问题
+      publicPath: '/',
       // 生产环境使用 contenthash 实现长期缓存
       filename: isProduction ? '[name].[contenthash].js' : '[name].js',
       // 异步加载的 chunk 使用 chunkFilename
