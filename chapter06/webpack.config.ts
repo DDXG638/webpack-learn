@@ -64,7 +64,8 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
         chunks: 'all',
         // 最小体积 - 超过此大小才会被分割
         minSize: 20000,
-        // 注意：不设置外层 maxSize，让 cacheGroups 中的 maxSize 独立生效
+        // 最大体积 - 超过此大小会尝试分割
+        maxSize: 244000,
         // 最小引用次数 - 模块被引用次数达到此值才会被分割
         minChunks: 1,
         // 最大异步请求数 - 最多分割成多少个异步 chunk
