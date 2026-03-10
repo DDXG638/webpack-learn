@@ -29,12 +29,12 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
     },
 
     // 缓存配置
-    cache: {
+    cache: isProduction ? {
       type: 'filesystem',
       buildDependencies: {
         config: [__filename],
       },
-    },
+    } : true,
 
     // 输出配置
     output: {
@@ -233,7 +233,15 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       open: true,
       hot: true,
       compress: true,
-      historyApiFallback: true,
+      historyApiFallback: {
+        // 所有路由都返回 index.html
+        rewrites: [
+          {
+            from: /./,
+            to: '/index.html',
+          },
+        ],
+      },
       client: {
         overlay: {
           errors: true,
@@ -247,6 +255,6 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
     mode: mode,
 
     // 开发环境 Source Map 配置
-    devtool: isProduction ? 'source-map' : 'eval-cheap-module-source-map',
+    devtool: isProduction ? 'source-map' : 'eval-source-map',
   };
 };
