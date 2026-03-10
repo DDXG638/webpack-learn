@@ -4,13 +4,9 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { VueLoaderPlugin } from 'vue-loader';
 import webpack from 'webpack';
-// 动态导入 webpack-bundle-analyzer 以避免类型问题
-let BundleAnalyzerPlugin: any;
-try {
-  BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-} catch (e) {
-  BundleAnalyzerPlugin = null;
-}
+// webpack-bundle-analyzer 是 CommonJS 导出，使用默认导入
+// @ts-ignore webpack-bundle-analyzer 缺少类型声明
+import BundleAnalyzerPlugin from 'webpack-bundle-analyzer';
 
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -220,7 +216,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       }),
 
       // 打包分析工具
-      ...(isAnalyze && BundleAnalyzerPlugin ? [new BundleAnalyzerPlugin({
+      ...(isAnalyze ? [new BundleAnalyzerPlugin({
         analyzerMode: 'static',
         reportFilename: 'bundle-report.html',
         openAnalyzer: true,
