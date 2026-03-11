@@ -55,7 +55,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
 
     // 优化配置 - Tree-Shaking 和模块合并核心
     optimization: {
-      // 使用 ES 模块语法，启用 Tree-Shaking
+      // 使用 ES 模块语法，启用 Tree-Shaking(标记未使用的导出)
       // 注意：Tree-Shaking 只在 production 模式下生效
       usedExports: true,
 
