@@ -42,10 +42,59 @@ sideEffects 用于告诉 Webpack 哪些模块是"纯净的"（没有副作用）
 
 Scope Hoisting 将多个模块合并到单个函数中，减少函数闭包数量，提升执行效率并减小包体积。
 
+**效果对比（development 模式）：**
+
+| 配置 | main.js 大小 | 差异 |
+|------|-------------|------|
+| `concatenateModules: false` | 117 KB | - |
+| `concatenateModules: true` | 95.5 KB | **-18%** |
+
 **优势：**
 - 减少函数声明，提升执行效率
 - 减小包体积（消除模块包装代码）
 - 更好的代码优化
+
+**工作原理示例：**
+
+```javascript
+// 模块 A
+export function add(a, b) { return a + b; }
+
+// 模块 B (依赖 A)
+import { add } from './a';
+export function sum(arr) { return arr.reduce((s, n) => add(s, n), 0); }
+
+// 模块 C (依赖 B)
+import { sum } from './b';
+export function avg(arr) { return sum(arr) / arr.length; }
+```
+
+**未合并时（每个模块独立包装）：**
+```javascript
+var __webpack_modules__ = {
+  "./a.js": (module) => {
+    module.exports.add = function(a, b) { return a + b; };
+  },
+  "./b.js": (module, __webpack_require__) => {
+    var a = __webpack_require__("./a.js");
+    module.exports.sum = function(arr) { ... };
+  },
+  "./c.js": (module, __webpack_require__) => {
+    var b = __webpack_require__("./b.js");
+    module.exports.avg = function(arr) { ... };
+  }
+};
+```
+
+**合并后（Scope Hoisting）：**
+```javascript
+// 所有模块合并到一个函数中
+function(scope) {
+  scope.a = { add: function(a, b) { return a + b; } };
+  scope.b = { sum: function(arr) { return arr.reduce((s, n) => scope.a.add(s, n), 0); } };
+  scope.c = { avg: function(arr) { return scope.b.sum(arr) / arr.length; } };
+}
+```
 
 ### 4. 产物分析工具
 
