@@ -103,12 +103,17 @@ optimization: {
 {
   "sideEffects": [
     "*.css",
-    "*.scss"
+    "*.scss",
+    "*.vue"
   ]
 }
 ```
 
-告诉 Webpack 只有 CSS 和 SCSS 文件有副作用，其他 JS 模块都是"纯净的"。
+告诉 Webpack CSS、SCSS 和 Vue 组件文件有副作用，不应该被 Tree-Shaking 移除。
+
+**重要提示**：
+- 如果项目中使用 Vue 单文件组件的 `scoped` 样式，需要将 `*.vue` 也加入到 `sideEffects` 数组中
+- 否则 Vue 组件的 scoped 样式可能会丢失
 
 ## 实践步骤
 

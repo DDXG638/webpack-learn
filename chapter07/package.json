@@ -5,7 +5,8 @@
   "private": true,
   "sideEffects": [
     "*.css",
-    "*.scss"
+    "*.scss",
+    "*.vue"
   ],
   "scripts": {
     "dev": "webpack serve --mode development",

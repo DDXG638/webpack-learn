@@ -94,14 +94,6 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
             priority: -20,
             reuseExistingChunk: true,
           },
-
-          // 提取样式文件
-          styles: {
-            name: 'styles',
-            test: /\.css$/,
-            chunks: 'all',
-            enforce: true,
-          },
         },
       },
 
