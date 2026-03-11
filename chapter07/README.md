@@ -97,6 +97,35 @@ optimization: {
 }
 ```
 
+### usedExports 的效果对比
+
+以 Vue3 项目为例，配置 `usedExports: true` 前后的差异：
+
+| 配置 | @vue/runtime-core | 其他 vendors | 总计 |
+|------|------------------|--------------|------|
+| `usedExports: false` | ~74 KB | ~63 KB | ~137 KB |
+| `usedExports: true` | ~39 KB | ~25 KB | ~64 KB |
+| **差异** | **-47%** | **-60%** | **-53%** |
+
+这是因为 Webpack 会分析实际使用的 API，未使用的代码会被 Tree-Shaking 删除。
+
+### Vue 依赖分割的注意事项
+
+在第6章中我们学习了将 Vue 相关的依赖单独分割，但需要注意：
+
+- **问题**：随着项目迭代，会使用越来越多的 Vue API，每次打包内容都会变化，导致 contentHash 也变化，缓存失效
+- **建议**：对于应用开发，建议将所有 node_modules 打成稳定的单个体积，反而更容易命中缓存
+
+```javascript
+// 推荐做法：简单稳定
+cacheGroups: {
+  vendors: {
+    test: /[\\/]node_modules[\\/]/,
+    name: 'vendors',
+  },
+}
+```
+
 ### package.json（可选配置）
 
 ```json
@@ -145,7 +174,7 @@ npm run build
 ### 4. 分析打包产物
 
 ```bash
-npm run生成的 analyze
+npm run analyze
 ```
 
 打开 bundle-report.html 文件，可视化查看打包产物组成。
