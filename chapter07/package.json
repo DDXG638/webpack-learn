@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "webpack serve --mode development",
     "build": "webpack --mode production",
+    "build:cdn": "webpack --mode production --env cdn",
     "start": "webpack serve --mode development --open",
     "analyze": "webpack --mode production --env analyze"
   },

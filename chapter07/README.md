@@ -126,6 +126,53 @@ cacheGroups: {
 }
 ```
 
+### 方案三：通过 CDN 引入 Vue
+
+除了将 Vue 打包到应用中外，还可以通过 CDN 引入 Vue，实现完全的缓存稳定：
+
+**1. HTML 模板中引入 Vue CDN：**
+
+```html
+<!-- public/index-cdn.html -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+```
+
+**2. Webpack 配置排除 Vue：**
+
+```javascript
+// webpack.config.ts
+externals: {
+  vue: 'Vue',  // 不打包 Vue，从全局变量 Vue 获取
+}
+```
+
+**3. 打包命令：**
+
+```bash
+npm run build:cdn  # 使用 --env cdn 参数
+```
+
+**效果对比：**
+
+| 方案 | 打包体积 | 首次加载 | 缓存稳定性 |
+|------|---------|---------|-----------|
+| 打包 Vue (usedExports=true) | ~65 KB | 较快 | 内容变化则失效 |
+| CDN 引入 Vue | ~10 KB | 依赖 CDN | **完全稳定** |
+
+**优点：**
+- Vue 代码完全不参与打包，contentHash 永远不变
+- 多站点共享 CDN，用户可能已有缓存
+- 主包体积大幅减小
+
+**缺点：**
+- 首次需要加载 Vue CDN
+- 依赖 CDN 服务可用性
+- 需要手动管理 Vue 版本
+
+**适用场景：**
+- 适合：后台管理系统、企业内部应用
+- 不适合：对首屏性能极致追求的 C 端产品
+
 ### package.json（可选配置）
 
 ```json

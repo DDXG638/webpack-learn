@@ -16,6 +16,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
   const mode = (argv.mode || 'development') as 'development' | 'production' | 'none';
   const isProduction = mode === 'production';
   const isAnalyze = env?.analyze;
+  const isCdn = env?.cdn;
 
   return {
     // 入口文件
@@ -52,6 +53,11 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
         '@': path.resolve(__dirname, 'src'),
       },
     },
+
+    // 外部扩展配置 - 通过 CDN 引入 Vue 时使用
+    externals: isCdn ? {
+      vue: 'Vue',
+    } : {},
 
     // 优化配置 - Tree-Shaking 和模块合并核心
     optimization: {
@@ -173,7 +179,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       new VueLoaderPlugin(),
 
       new HtmlWebpackPlugin({
-        template: './public/index.html',
+        template: isCdn ? './public/index-cdn.html' : './public/index.html',
         title: 'Webpack5 Tree-Shaking和模块合并 Demo',
         filename: 'index.html',
         inject: 'body',
