@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "description": "Webpack5 Tree-Shaking和模块合并 Demo",
   "private": true,
-  "sideEffects": [
-    "*.css",
-    "*.scss",
-    "*.vue"
-  ],
   "scripts": {
     "dev": "webpack serve --mode development",
     "build": "webpack --mode production",

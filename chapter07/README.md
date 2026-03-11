@@ -97,23 +97,22 @@ optimization: {
 }
 ```
 
-### package.json
+### package.json（可选配置）
 
 ```json
 {
   "sideEffects": [
     "*.css",
-    "*.scss",
-    "*.vue"
+    "*.scss"
   ]
 }
 ```
 
-告诉 Webpack CSS、SCSS 和 Vue 组件文件有副作用，不应该被 Tree-Shaking 移除。
+`sideEffects` 配置是可选的，用于告诉 Webpack 哪些文件有副作用不应该被 Tree-Shaking 移除。
 
-**重要提示**：
-- 如果项目中使用 Vue 单文件组件的 `scoped` 样式，需要将 `*.vue` 也加入到 `sideEffects` 数组中
-- 否则 Vue 组件的 scoped 样式可能会丢失
+**说明**：
+- 对于现代 Vue 项目，Vue-loader 已经内置了对组件样式的处理，可以不配置 sideEffects
+- 如果项目中有通过 import 引入的 CSS/SCSS 文件，建议配置以确保样式不会被 Tree-Shaking 移除
 
 ## 实践步骤
 
