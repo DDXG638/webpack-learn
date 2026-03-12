@@ -51,6 +51,13 @@
           <HelloWorld />
         </div>
       </section>
+
+      <section class="demo-section">
+        <h2>7. 自定义 Loader</h2>
+        <div class="demo-box">
+          <CustomLoaderDemo />
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -58,6 +65,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import HelloWorld from './components/HelloWorld.vue';
+import CustomLoaderDemo from './components/CustomLoaderDemo.vue';
 // 使用 asset/source (原 raw-loader) 加载原始文本
 import rawText from './assets/demo.txt';
 // 使用 asset 模块处理图片
@@ -85,6 +93,13 @@ const testEs6 = () => {
   console.log('数组:', newArr);
 
   alert(message);
+};
+
+// 使用ref存储rawText
+// 注册组件
+const components = {
+  HelloWorld,
+  CustomLoaderDemo,
 };
 
 // 使用ref存储rawText

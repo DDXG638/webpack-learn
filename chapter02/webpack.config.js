@@ -42,6 +42,56 @@ export default (env, argv) => {
     module: {
       rules: [
         // ============================================
+        // 0. 自定义 Loader 配置
+        // ============================================
+
+        // 0.1 Banner Loader - 为 JS 文件添加版权注释
+        {
+          test: /\.js$/,
+          enforce: 'pre',
+          use: {
+            loader: path.resolve(__dirname, 'loaders/banner-loader.js'),
+            options: {
+              banner: 'Custom Banner Loader - Chapter02 Demo',
+            },
+          },
+          exclude: /node_modules/,
+        },
+
+        // 0.2 Replace Loader - 字符串替换
+        {
+          test: /\.js$/,
+          use: {
+            loader: path.resolve(__dirname, 'loaders/replace-loader.js'),
+            options: {
+              search: 'Hello',
+              replace: '你好',
+            },
+          },
+          exclude: /node_modules/,
+        },
+
+        // 0.3 Async Loader - 异步处理演示
+        {
+          test: /\.js$/,
+          use: {
+            loader: path.resolve(__dirname, 'loaders/async-demo-loader.js'),
+            options: {
+              delay: 100,
+            },
+          },
+          exclude: /node_modules/,
+        },
+
+        // 0.4 Markdown Loader - 将 Markdown 转换为 HTML
+        {
+          test: /\.md$/,
+          use: {
+            loader: path.resolve(__dirname, 'loaders/markdown-loader.js'),
+          },
+        },
+
+        // ============================================
         // 1. Vue单文件组件 Loader
         // ============================================
         {
