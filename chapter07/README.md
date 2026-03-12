@@ -38,6 +38,83 @@ sideEffects 用于告诉 Webpack 哪些模块是"纯净的"（没有副作用）
 
 表示 CSS 和 SCSS 文件有副作用，不应该被移除。
 
+### 2.1 Webpack 如何判断副作用
+
+Webpack 通过静态分析来判断代码是否有副作用，主要包括以下几种情况：
+
+| 代码类型 | 示例 | 能否静态识别 |
+|---------|------|-------------|
+| console/alert 调用 | `console.log()` | ✅ 能 |
+| 全局变量修改 | `window.x = 1` | ✅ 能 |
+| 参数 mutation | `obj.x = 1` | ✅ 能 |
+| 模块级变量赋值 | `globalState = 'x'` | ✅ 能 |
+| 动态代码 | `eval('...')` | ❌ 不能 |
+| DOM 操作 | `document.body` | ❌ 不能 |
+
+**注意**：即使函数内部有副作用，如果**没有被实际调用**，Webpack 在 production 模式下仍然会将其移除。
+
+### 2.2 如何编写更利于 Tree-Shaking 的代码
+
+**1. 使用 ES Module 语法**
+
+```typescript
+// ✅ 推荐：ES Module
+import { add } from './math';
+
+// ❌ 避免：CommonJS
+const { add } = require('./math');
+```
+
+**2. 尽量使用具名导出**
+
+```typescript
+// ✅ 推荐：具名导出，Webpack 可以精确追踪
+export function add(a: number, b: number) { return a + b; }
+export function multiply(a: number, b: number) { return a * b; }
+
+// ❌ 避免：默认导出，整个模块会被保留
+export default function() {}
+```
+
+**3. 避免修改传入的参数**
+
+```typescript
+// ✅ 推荐：返回新对象，不修改原对象
+export function addItem(list: number[], item: number): number[] {
+  return [...list, item];
+}
+
+// ❌ 避免：修改原对象，Webpack 无法确定是否有副作用
+export function addItem(list: number[], item: number): void {
+  list.push(item);
+}
+```
+
+**4. 使用纯函数注解**
+
+如果某个调用确实没有副作用，可以使用 `/*#__PURE__*/` 注解帮助 Webpack 识别：
+
+```typescript
+// 告诉 Webpack 这个调用是纯的，可以安全移除未使用的结果
+const result = /*#__PURE__*/ someFunction();
+```
+
+**5. 合理配置 sideEffects**
+
+```json
+{
+  "sideEffects": [
+    "*.css",
+    "*.scss",
+    "./src/polyfill.ts"
+  ]
+}
+```
+
+- 只标记确实有副作用的文件
+- CSS/SCSS 必须标记，因为样式注入是副作用
+- 避免使用 `sideEffects: true`，会导致所有未使用代码被保留
+
 ### 3. Scope Hoisting（模块合并）
 
 Scope Hoisting 将多个模块合并到单个函数中，减少函数闭包数量，提升执行效率并减小包体积。
@@ -228,7 +305,8 @@ npm run build:cdn  # 使用 --env cdn 参数
 {
   "sideEffects": [
     "*.css",
-    "*.scss"
+    "*.scss",
+    "*.vue"
   ]
 }
 ```
