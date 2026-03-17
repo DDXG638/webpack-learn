@@ -243,6 +243,54 @@ class MyPlugin {
 | 9 | `afterEmit` | AsyncSeriesHook | 输出资源后 |
 | 10 | `done` | AsyncSeriesHook | 构建完成 |
 
+#### 4.4 优化阶段钩子
+
+Webpack 在 `finishModules` 之后进入优化阶段，主要包括模块优化和代码分割。
+
+**执行流程：**
+
+```
+finishModules → optimizeModules → optimizeChunks → ... → emit
+       │              │                │
+       │              │                └── splitChunks（代码分割）
+       │              │
+       └── Tree-Shaking（标记未使用导出）
+```
+
+**常用优化钩子：**
+
+| 钩子 | 类型 | 说明 |
+|------|------|------|
+| `optimizeModules` | SyncHook | 模块优化阶段（Tree-Shaking 标记未使用导出） |
+| `optimizeChunks` | SyncHook | Chunk 优化阶段（splitChunks 代码分割） |
+| `optimizeTree` | AsyncSeriesHook | 优化模块依赖树 |
+| `optimizeChunkModules` | AsyncSeriesHook | 优化 Chunk 中的模块 |
+
+**Tree-Shaking 和 splitChunks 触发时机：**
+
+| 优化项 | 触发钩子 | 说明 |
+|--------|----------|------|
+| **Tree-Shaking** | `optimizeModules` | 标记未使用的导出（usedExports），最终删除在压缩阶段 |
+| **splitChunks** | `optimizeChunks` | 代码分割、提取公共模块 |
+| **Scope Hoisting** | `optimizeModules` | 模块合并（在 concatenateModules 时） |
+
+**注意**：这些钩子是 `compilation.hooks` 上的钩子，不是 `compiler.hooks` 上的。
+
+```typescript
+// 示例：在 Plugin 中监听优化钩子
+compiler.hooks.compilation.tap('Plugin', (compilation) => {
+  // Tree-Shaking
+  compilation.hooks.optimizeModules.tap('Plugin', () => {
+    console.log('开始标记未使用的导出');
+  });
+
+  // splitChunks
+  compilation.hooks.optimizeChunks.tap('Plugin', (chunks) => {
+    console.log(`开始代码分割，当前 Chunk 数量: ${chunks.size}`);
+  });
+});
+```
+
 ### 5. 打包产物分析
 
 #### 5.1 产物结构
