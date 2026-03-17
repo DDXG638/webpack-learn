@@ -152,6 +152,77 @@ interface Chunk {
 }
 ```
 
+### 2.5 Module、Chunk、Bundle 的区别
+
+这是 Webpack 中最容易混淆的三个概念：
+
+| 概念 | 说明 | 生成阶段 |
+|------|------|----------|
+| **Module** | 源代码模块（.ts/.js/.vue/CSS 等） | `make` 阶段 |
+| **Chunk** | 代码块，包含多个 Module | `optimizeModules` 阶段 |
+| **Bundle** | 最终输出的文件（Chunk 的产物） | `emit` 阶段 |
+
+#### 构建流程图
+
+```
+入口文件 (.ts/.js)
+       │
+       ▼ make 阶段（分析依赖）
+    ┌───────┐
+    │Module │  ← 源代码模块（.ts、.js、.vue 等）
+    └───────┘
+       │
+       ▼ optimizeModules 阶段
+    ┌───────┐
+    │ Chunk │  ← 1个入口 = 1个原始 Chunk
+    └───────┘
+       │
+       ▼ optimizeChunks 阶段（splitChunks）
+    ┌─────────┐
+    │ Chunk 1 │ ──┐
+    ├─────────┤   │ 分割
+    │ Chunk 2 │ ──┘
+    └─────────┘
+       │
+       ▼ emit 阶段
+    ┌─────────┐
+    │Bundle.js│ ← 最终输出的文件
+    └─────────┘
+```
+
+#### 关键结论
+
+1. **Chunk 在 `optimizeModules` 阶段生成**
+   - 在此之前，`compilation.chunks.size = 0`
+   - 原始 Chunk 数量 = 入口文件数量（1个入口 = 1个 Chunk）
+
+2. **splitChunks 在 `optimizeChunks` 阶段触发**
+   - 将 1 个原始 Chunk 分割成多个 Chunk
+   - 例如：分割出 vendors、common 等
+
+3. **Chunk 和 Bundle 的关系**
+   - Chunk 是内存中的代码块
+   - Bundle 是 Chunk 写入磁盘后的文件（通常是 .js 文件）
+
+#### 示例
+
+```javascript
+// 1 个入口
+entry: './src/main.ts'
+// 原始 Chunk: 1个 (main)
+// 输出: main.js
+
+// 2 个入口
+entry: { main: './src/main.ts', other: './src/other.ts' }
+// 原始 Chunk: 2个 (main, other)
+// 输出: main.js, other.js
+
+// 启用 splitChunks
+optimization: { splitChunks: { chunks: 'all' } }
+// 分割后 Chunk: 2个 (main, vendors)
+// 输出: main.js, vendors.js
+```
+
 ### 3. Loader 原理
 
 #### 3.1 Loader 工作流程
