@@ -53,7 +53,14 @@ class BuildProcessPlugin {
     // 6. 编译阶段 - compilation
     compiler.hooks.compilation.tap(this.name, (comp) => {
       console.log('【阶段6】compilation - 创建编译对象');
-      console.log(`  模块数量: ${comp.modules.size}`);
+      console.log(`  此时模块数量: ${comp.modules.size}`);
+
+      // 在 compilation 钩子中注册 finishModules 钩子
+      // finishModules 是在所有模块依赖图构建完成后触发的
+      comp.hooks.finishModules.tap(this.name, (_modules: any) => {
+        console.log('【阶段6.1】finishModules - 所有模块依赖图构建完成');
+        console.log(`  模块数量: ${comp.modules.size}`);
+      });
     });
 
     // 7. 生成阶段 - emit（输出资源前）
