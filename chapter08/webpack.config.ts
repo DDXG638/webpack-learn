@@ -23,11 +23,14 @@ class TapablePlugin {
       // 可以在此处修改打包输出
     });
 
-    // 2. 同步保险钩子效果演示 - 通过 beforeCompile
+    // 2. 同步保险钩子效果演示 - 通过 log
     // 如果有返回值，将停止执行后续回调
-    compiler.hooks.beforeCompile.tap(this.name, (_compilationParams: any) => {
-      console.log('【SyncBailHook】beforeCompile 钩子触发');
-      return; // 返回值会停止后续回调执行
+    compiler.hooks.entryOption.tap(this.name, (_context, _entry) => {
+      console.log('【SyncBailHook】entryOption 第一个钩子触发');
+      return true; // 返回值会停止后续回调执行
+    });
+    compiler.hooks.entryOption.tap(this.name + 'V2', (_context, _entry) => {
+      console.log('【SyncBailHook】entryOption 第二个钩子触发');
     });
 
     // 3. 异步串行钩子 - AsyncSeriesHook
@@ -42,6 +45,7 @@ class TapablePlugin {
 
     // 4. 使用 compilation 钩子
     compiler.hooks.compilation.tap(this.name, (compilation: Compilation) => {
+      console.log('【SyncHook】compilation 钩子触发 - 同步执行');
       // 对每个 chunk 进行处理
       compilation.chunkGroups.forEach((chunkGroup: any) => {
         console.log(`处理 Chunk 组: ${chunkGroup.name}`);
@@ -53,14 +57,15 @@ class TapablePlugin {
 // 演示自定义钩子类的创建和使用
 class BuildHooks {
   // 定义钩子
-  beforeBuild = new Tapable.SyncHook(['files']);
+  beforeBuild = new Tapable.SyncHook<[string[], number]>(['files', 'age']);
   build = new Tapable.SyncHook(['buildInfo']);
-  afterBuild = new Tapable.AsyncSeriesHook(['success']);
+  afterBuild = new Tapable.AsyncSeriesHook<[boolean]>(['success']);
+  done = new Tapable.SyncBailHook<[boolean], string | void>(['is'], 'name')
 
   // 触发钩子
   runBeforeBuild(files: string[]) {
     console.log('\n=== 触发 beforeBuild 钩子 ===');
-    this.beforeBuild.call(files);
+    this.beforeBuild.call(files, 28);
   }
 
   runBuild(info: { entry: string; output: string }) {
@@ -70,13 +75,24 @@ class BuildHooks {
 
   runAfterBuild(success: boolean) {
     console.log('\n=== 触发 afterBuild 钩子 ===');
-    this.afterBuild.callAsync(success, (err: Error | null) => {
-      if (err) {
-        console.error('构建后处理失败:', err);
-      } else {
-        console.log('构建后处理完成');
-      }
-    });
+    this.afterBuild.promise(success).then(res => {
+      console.log('构建后处理完成', res);
+    }, err => {
+      console.error('构建后处理失败:', err);
+    })
+    // this.afterBuild.callAsync(success, (err: Error | null) => {
+    //   if (err) {
+    //     console.error('构建后处理失败:', err);
+    //   } else {
+    //     console.log('构建后处理完成');
+    //   }
+    // });
+  }
+
+  runDone(success: boolean) {
+    console.log('\n=== 触发 done 钩子 ===');
+    const res = this.done.call(success);
+    console.log('\n=== done 钩子返回值 ===', res);
   }
 }
 
@@ -84,12 +100,12 @@ class BuildHooks {
 const buildHooks = new BuildHooks();
 
 // 注册自定义钩子的回调
-buildHooks.beforeBuild.tap('Plugin1', (...args: any[]) => {
-  console.log('  [Plugin1] 检查文件:', args);
+buildHooks.beforeBuild.tap('Plugin1', (files, age) => {
+  console.log('  [Plugin1] 检查文件:', files, age);
 });
 
-buildHooks.beforeBuild.tap('Plugin2', (..._args: any[]) => {
-  console.log('  [Plugin2] 验证文件完整性');
+buildHooks.beforeBuild.tap('Plugin2', (files, age) => {
+  console.log('  [Plugin2] 验证文件完整性', files, age);
 });
 
 buildHooks.build.tap('Plugin1', (...args: any[]) => {
@@ -102,11 +118,30 @@ buildHooks.build.tap('Plugin2', (...args: any[]) => {
   console.log('  [Plugin2] 输出目录:', info.output);
 });
 
+buildHooks.afterBuild.tapPromise('Plugin1', (is) => {
+  console.log('  [Plugin1] 1秒后结束构建:', is);
+  return new Promise((resolve, _reject) => {
+    setTimeout(() => {
+      resolve()
+    }, 1000)
+  })
+})
+
+buildHooks.done.tap('Plugin1', (is) => {
+  console.log('  [Plugin1] 构建完成done:', is);
+  return '111' // 这里返回了值，后面的监听就不会执行了
+})
+buildHooks.done.tap('Plugin2', (is) => {
+  console.log('  [Plugin2] 构建完成done:', is);
+  return '222'
+})
+
 // 模拟构建流程
 function simulateBuild() {
   buildHooks.runBeforeBuild(['src/main.ts', 'src/App.vue']);
   buildHooks.runBuild({ entry: './src/main.ts', output: './dist' });
   buildHooks.runAfterBuild(true);
+  buildHooks.runDone(false)
 }
 
 export default (_env: Record<string, string | undefined>, argv: Record<string, string | undefined>) => {

@@ -48,7 +48,7 @@ Tapable 提供了多种类型的钩子，适用于不同的场景：
 import { SyncHook } from 'tapable';
 
 // 定义钩子
-const hook = new SyncHook<[string, number]>('name', 'age');
+const hook = new SyncHook<[string, number]>(['name', 'age']);
 
 // 注册回调
 hook.tap('Plugin1', (name, age) => {
@@ -73,7 +73,7 @@ hook.call('Tom', 25);
 ```typescript
 import { SyncBailHook } from 'tapable';
 
-const hook = new SyncBailHook<[string]>('name');
+const hook = new SyncBailHook<[string]>(['name']);
 
 hook.tap('Plugin1', (name) => {
   console.log('Plugin1 执行');
@@ -95,7 +95,7 @@ hook.call('Tom');
 ```typescript
 import { SyncWaterfallHook } from 'tapable';
 
-const hook = new SyncWaterfallHook<[number]>('count');
+const hook = new SyncWaterfallHook<[number]>(['count']);
 
 hook.tap('Plugin1', (count) => {
   return count + 10; // 传递给下一个
@@ -140,7 +140,7 @@ hook.call();
 ```typescript
 import { AsyncSeriesHook } from 'tapable';
 
-const hook = new AsyncSeriesHook<[string]>('name');
+const hook = new AsyncSeriesHook<[string]>(['name']);
 
 // 使用 tapAsync（回调方式）
 hook.tapAsync('Plugin1', (name, callback) => {
@@ -172,7 +172,7 @@ hook.callAsync('Tom', (err) => {
 ```typescript
 import { AsyncParallelHook } from 'tapable';
 
-const hook = new AsyncParallelHook<[string]>('name');
+const hook = new AsyncParallelHook<[string]>(['name']);
 
 hook.tapPromise('Plugin1', (name) => {
   return new Promise((resolve) => {
@@ -193,7 +193,7 @@ hook.tapPromise('Plugin2', (name) => {
 });
 
 // 两个插件会同时执行，总耗时取最长的那个
-hook.callAsync('Tom', (err) => {
+hook.promise('Tom').then(res => {
   console.log('所有回调执行完成');
 });
 ```
