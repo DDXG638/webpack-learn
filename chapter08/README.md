@@ -433,3 +433,32 @@ npm run build
 5. **Webpack 版本兼容**：Tapable API 在 Webpack 5 中保持稳定，版本间差异较小。
 
 6. **调试技巧**：使用 `console.log` 在钩子回调中打印日志，帮助理解执行流程。
+
+7. **关于 tap 注册异步钩子**：
+
+   Webpack 的 `emit`、`done` 等钩子是 `AsyncSeriesHook` 类型，但使用 `tap` 注册也不会报错。这是因为 **Tapable 为所有钩子类型都提供了三个注册方法**（`tap`、`tapAsync`、`tapPromise`），并做了兼容性处理。
+
+   ```typescript
+   // 两者都可以正常工作
+   compiler.hooks.emit.tap('Plugin', (compilation) => {
+     // 不需要手动调用 callback，Tapable 会自动处理
+     console.log('emit 触发');
+   });
+
+   compiler.hooks.emit.tapAsync('Plugin', (compilation, callback) => {
+     // 需要手动调用 callback
+     setTimeout(() => {
+       console.log('emit 完成');
+       callback();
+     }, 100);
+   });
+   ```
+
+   **区别**：
+   - `tap`：内部会自动将回调包装为异步函数并调用 `callback()`，使用简单
+   - `tapAsync`：需要手动调用 `callback()`，适合需要精确控制异步流程的场景
+   - `tapPromise`：返回 Promise，适合基于 Promise 的异步逻辑
+
+   **建议**：虽然 `tap` 可以混用，但为了代码可读性和避免潜在问题，建议按照钩子类型使用对应的注册方法：
+   - `SyncHook` → 用 `tap`
+   - `AsyncSeriesHook` → 用 `tapAsync` 或 `tapPromise`
