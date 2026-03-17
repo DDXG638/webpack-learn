@@ -22,6 +22,8 @@ class BuildProcessPlugin {
   name = 'BuildProcessPlugin';
 
   apply(compiler: Compiler) {
+    let isMainCompilation = true;
+
     // 1. 初始化阶段 - beforeRun
     compiler.hooks.beforeRun.tap(this.name, (comp) => {
       console.log('\n========== Webpack 构建流程演示 ==========');
@@ -36,18 +38,27 @@ class BuildProcessPlugin {
 
     // 3. 初始化阶段 - beforeCompile
     compiler.hooks.beforeCompile.tap(this.name, (_params) => {
+      // 过滤掉 html-webpack-plugin 的子编译器
+      if (!isMainCompilation) return;
       console.log('【阶段3】beforeCompile - 编译前准备');
       console.log(`  编译器名称: ${compiler.name}`);
+      isMainCompilation = false;
     });
 
     // 4. 编译阶段 - compile
-    compiler.hooks.compile.tap(this.name, (_params) => {
+    let showCompileLog = true;
+    compiler.hooks.compile.tap(this.name, () => {
+      if (!showCompileLog) return;
       console.log('【阶段4】compile - 开始编译');
+      showCompileLog = false;
     });
 
     // 5. 编译阶段 - compilation（创建 Compilation 对象）
     // 注意：compilation 钩子在 make 之前触发，此时模块依赖图尚未生成
     compiler.hooks.compilation.tap(this.name, (comp) => {
+      // 过滤掉 html-webpack-plugin 创建的子编译器
+      if (comp.compiler.parentCompilation) return;
+
       console.log('【阶段5】compilation - 创建 Compilation 对象');
       console.log(`  此时模块数量: ${comp.modules.size}（依赖图尚未生成）`);
 
@@ -61,12 +72,17 @@ class BuildProcessPlugin {
 
     // 6. 编译阶段 - make（从入口点开始分析依赖，构建模块依赖图）
     // 注意：make 钩子在 compilation 之后触发
-    compiler.hooks.make.tap(this.name, (_comp) => {
+    compiler.hooks.make.tap(this.name, (comp: any) => {
+      // 过滤掉子编译器
+      if (comp.parentCompilation) return;
       console.log('【阶段6】make - 开始构建模块依赖图');
     });
 
     // 8. 生成阶段 - emit（输出资源前）
-    compiler.hooks.emit.tap(this.name, (comp) => {
+    compiler.hooks.emit.tap(this.name, (comp: any) => {
+      // 过滤掉子编译器
+      if (comp.parentCompilation) return;
+
       console.log('【阶段8】emit - 输出资源到目录');
       const assets = Object.keys(comp.assets);
       console.log(`  输出文件: ${assets.length} 个`);
@@ -77,7 +93,9 @@ class BuildProcessPlugin {
     });
 
     // 9. 完成阶段 - afterEmit
-    compiler.hooks.afterEmit.tap(this.name, (_comp) => {
+    compiler.hooks.afterEmit.tap(this.name, (comp: any) => {
+      // 过滤掉子编译器
+      if (comp.parentCompilation) return;
       console.log('【阶段9】afterEmit - 输出完成');
     });
 
