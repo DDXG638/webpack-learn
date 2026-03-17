@@ -45,27 +45,29 @@ class BuildProcessPlugin {
       console.log('【阶段4】compile - 开始编译');
     });
 
-    // 5. 编译阶段 - make（从入口点开始分析依赖）
-    compiler.hooks.make.tap(this.name, (_comp) => {
-      console.log('【阶段5】make - 构建模块依赖图');
-    });
-
-    // 6. 编译阶段 - compilation
+    // 5. 编译阶段 - compilation（创建 Compilation 对象）
+    // 注意：compilation 钩子在 make 之前触发，此时模块依赖图尚未生成
     compiler.hooks.compilation.tap(this.name, (comp) => {
-      console.log('【阶段6】compilation - 创建编译对象');
-      console.log(`  此时模块数量: ${comp.modules.size}`);
+      console.log('【阶段5】compilation - 创建 Compilation 对象');
+      console.log(`  此时模块数量: ${comp.modules.size}（依赖图尚未生成）`);
 
       // 在 compilation 钩子中注册 finishModules 钩子
       // finishModules 是在所有模块依赖图构建完成后触发的
       comp.hooks.finishModules.tap(this.name, (_modules: any) => {
-        console.log('【阶段6.1】finishModules - 所有模块依赖图构建完成');
+        console.log('【阶段7】finishModules - 所有模块依赖图构建完成');
         console.log(`  模块数量: ${comp.modules.size}`);
       });
     });
 
-    // 7. 生成阶段 - emit（输出资源前）
+    // 6. 编译阶段 - make（从入口点开始分析依赖，构建模块依赖图）
+    // 注意：make 钩子在 compilation 之后触发
+    compiler.hooks.make.tap(this.name, (_comp) => {
+      console.log('【阶段6】make - 开始构建模块依赖图');
+    });
+
+    // 8. 生成阶段 - emit（输出资源前）
     compiler.hooks.emit.tap(this.name, (comp) => {
-      console.log('【阶段7】emit - 输出资源到目录');
+      console.log('【阶段8】emit - 输出资源到目录');
       const assets = Object.keys(comp.assets);
       console.log(`  输出文件: ${assets.length} 个`);
       assets.forEach((asset) => {
@@ -74,14 +76,14 @@ class BuildProcessPlugin {
       });
     });
 
-    // 8. 完成阶段 - afterEmit
+    // 9. 完成阶段 - afterEmit
     compiler.hooks.afterEmit.tap(this.name, (_comp) => {
-      console.log('【阶段8】afterEmit - 输出完成');
+      console.log('【阶段9】afterEmit - 输出完成');
     });
 
-    // 9. 完成阶段 - done
+    // 10. 完成阶段 - done
     compiler.hooks.done.tap(this.name, (stats) => {
-      console.log('【阶段9】done - 构建完成');
+      console.log('【阶段10】done - 构建完成');
       console.log(`  耗时: ${stats.endTime - stats.startTime}ms`);
       console.log('=============================================\n');
     });
