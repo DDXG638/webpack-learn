@@ -1,0 +1,245 @@
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { Configuration, WebpackPluginInstance } from 'webpack';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
+import { VueLoaderPlugin } from 'vue-loader';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type WebpackConfig = any;
+
+// 环境类型
+type WebpackEnv = {
+  analyze?: boolean;
+  performance?: boolean;
+};
+
+export default (env: WebpackEnv): Configuration => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const needAnalyze = env?.analyze;
+
+  const plugins: WebpackPluginInstance[] = [
+    new VueLoaderPlugin(),
+    new HtmlWebpackPlugin({
+      template: './public/index.html',
+      title: 'Webpack5 性能优化 Demo',
+      inject: true,
+      minify: isProduction ? {
+        removeComments: true,
+        collapseWhitespace: true,
+        removeAttributeQuotes: true,
+      } : false,
+    }),
+  ];
+
+  if (isProduction) {
+    plugins.push(new MiniCssExtractPlugin({
+      filename: 'css/[name].[contenthash:8].css',
+      chunkFilename: 'css/[name].[contenthash:8].chunk.css',
+    }));
+  }
+
+  const config: WebpackConfig = {
+    // 入口文件
+    entry: {
+      main: './src/main.ts',
+    },
+
+    // 输出配置
+    output: {
+      path: join(__dirname, 'dist'),
+      filename: isProduction ? '[name].[contenthash:8].js' : '[name].js',
+      chunkFilename: isProduction ? '[name].[contenthash:8].chunk.js' : '[name].chunk.js',
+      clean: true,
+    },
+
+    // 解析配置
+    resolve: {
+      extensions: ['.ts', '.tsx', '.js', '.vue', '.json'],
+      alias: {
+        '@': join(__dirname, 'src'),
+        'vue': 'vue/dist/vue.esm-bundler.js',
+      },
+    },
+
+    // 模块规则
+    module: {
+      rules: [
+        // TypeScript
+        {
+          test: /\.tsx?$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+        },
+
+        // Vue 单文件组件
+        {
+          test: /\.vue$/,
+          loader: 'vue-loader',
+        },
+
+        // CSS
+        {
+          test: /\.css$/,
+          use: [
+            isProduction ? MiniCssExtractPlugin.loader : 'vue-style-loader',
+            'css-loader',
+          ],
+        },
+
+        // SCSS
+        {
+          test: /\.scss$/,
+          use: [
+            isProduction ? MiniCssExtractPlugin.loader : 'vue-style-loader',
+            'css-loader',
+            'sass-loader',
+          ],
+        },
+
+        // 图片资源
+        {
+          test: /\.(png|jpe?g|gif|svg|webp)$/i,
+          type: 'asset',
+          parser: {
+            dataUrlCondition: {
+              maxSize: 8 * 1024,
+            },
+          },
+          generator: {
+            filename: 'images/[name].[hash:8][ext]',
+          },
+        },
+
+        // 字体资源
+        {
+          test: /\.(woff2?|eot|ttf|otf)$/i,
+          type: 'asset/resource',
+          generator: {
+            filename: 'fonts/[name].[hash:8][ext]',
+          },
+        },
+      ],
+    },
+
+    // 插件配置
+    plugins,
+
+    // 优化配置
+    optimization: {
+      // 开启压缩
+      minimize: isProduction,
+
+      // 压缩器配置
+      minimizer: [
+        // Terser 压缩 JS
+        new TerserPlugin({
+          terserOptions: {
+            compress: {
+              drop_console: isProduction,
+              drop_debugger: isProduction,
+              pure_funcs: isProduction ? ['console.log', 'console.info'] : [],
+            },
+            mangle: true,
+            output: {
+              comments: false,
+            },
+          },
+          extractComments: false,
+        }),
+
+        // CSS 压缩
+        new CssMinimizerPlugin({
+          minimizerOptions: {
+            preset: [
+              'default',
+              {
+                discardComments: { removeAll: true },
+              },
+            ],
+          },
+        }),
+      ],
+
+      // ========== 关键优化配置 ==========
+
+      // 1. runtimeChunk: 将 runtime 代码抽离到单独文件
+      runtimeChunk: {
+        name: 'runtime',
+      },
+
+      // 2. splitChunks: 代码分割配置
+      splitChunks: {
+        chunks: 'all',
+        minSize: 30000,
+        cacheGroups: {
+          vendors: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'initial',
+            priority: -10,
+            reuseExistingChunk: true,
+          },
+          common: {
+            name: 'common',
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+        },
+      },
+
+      // 3. 模块 ID 优化
+      moduleIds: 'deterministic',
+
+      // 4. Chunk ID 优化
+      chunkIds: needAnalyze ? 'named' : 'deterministic',
+
+      // 5. 启用作用域提升
+      concatenateModules: true,
+    },
+
+    // 6. 使用缓存
+    cache: {
+      type: 'filesystem' as const,
+      buildDependencies: {
+        config: [__filename],
+      },
+    },
+
+    // 开发服务器配置
+    devServer: {
+      port: 8080,
+      hot: true,
+      open: false,
+      compress: true,
+      historyApiFallback: true,
+    },
+
+    // 性能配置
+    performance: {
+      hints: isProduction ? 'warning' : false,
+      maxEntrypointSize: 512000,
+      maxAssetSize: 512000,
+    },
+
+    // Source Map 配置
+    devtool: isProduction ? 'source-map' : 'eval-cheap-module-source-map',
+
+    // 统计信息配置
+    stats: {
+      colors: true,
+      modules: false,
+      children: false,
+      chunks: false,
+      chunkModules: false,
+    },
+  };
+
+  return config;
+};
