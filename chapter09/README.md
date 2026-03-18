@@ -484,7 +484,7 @@ npm run dev
 ```
 
 观察控制台输出，可以看到完整的构建流程：
-- beforeRun → run → beforeCompile → compile → make → compilation → optimize → emit → done
+- beforeRun → run → beforeCompile → compile → compilation → make → optimize → emit → done
 
 ### 3. 生产环境打包
 

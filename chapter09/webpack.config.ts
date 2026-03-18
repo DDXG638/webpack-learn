@@ -189,7 +189,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
 
     // 解析配置
     resolve: {
-      extensions: ['.ts', '.tsx', '.js', '.jsx', '.vue', '.json', '.svg'],
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.vue', '.json', '.svg', '.custom'],
       alias: {
         '@': path.resolve(__dirname, 'src'),
       },

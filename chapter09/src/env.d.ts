@@ -6,5 +6,10 @@ declare module '*.vue' {
   export default component
 }
 
+declare module '*.custom' {
+  const content: string;
+  export default content;
+}
+
 declare const __APP_NAME__: string;
 declare const __APP_VERSION__: string;

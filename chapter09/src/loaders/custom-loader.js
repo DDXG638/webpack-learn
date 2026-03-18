@@ -28,7 +28,11 @@ module.exports = function(source) {
 ${source}
 `;
 
+  // 将原始内容转换为 JS 模块导出
+  // 使用 JSON.stringify 来正确处理字符串中的特殊字符
+  const finallySource = `export default ${JSON.stringify(processedSource)};`;
+
   // 返回处理后的代码
   // 如果需要返回 sourceMap，可以使用 this.callback(null, processedSource, sourceMap)
-  return processedSource;
+  return finallySource;
 };

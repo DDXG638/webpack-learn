@@ -29,10 +29,15 @@
       <h2>打开控制台查看构建日志</h2>
       <p>构建过程中会输出各阶段的详细信息</p>
     </div>
+    <pre class="demo">
+      {{ customText }}
+    </pre>
   </div>
 </template>
 
 <script setup lang="ts">
+import customText from '@/assets/text.custom'
+
 const appName = __APP_NAME__;
 const appVersion = __APP_VERSION__;
 </script>
