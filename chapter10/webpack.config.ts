@@ -4,8 +4,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { VueLoaderPlugin } from 'vue-loader';
 import webpack from 'webpack';
-import type { Compiler, WebpackOptions } from 'webpack';
-import { ModuleFederationPlugin } from 'webpack';
+const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin
 
 // ES Module 中获取 __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -16,7 +15,7 @@ const __dirname = path.dirname(__filename);
  * Host 应用配置（消费远程模块）
  * ============================================================
  */
-const hostConfig: WebpackOptions = {
+const hostConfig = {
   name: 'host',
   mode: 'development',
   devtool: 'eval-source-map',
@@ -128,7 +127,7 @@ const hostConfig: WebpackOptions = {
  * Remote 应用配置（提供远程模块）
  * ============================================================
  */
-const remoteConfig: WebpackOptions = {
+const remoteConfig = {
   name: 'remote',
   mode: 'development',
   devtool: 'eval-source-map',

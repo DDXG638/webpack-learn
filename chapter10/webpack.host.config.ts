@@ -93,8 +93,8 @@ export default {
       name: 'host',
       // 远程模块列表
       remotes: {
-        // 远程应用别名: 远程应用名称@远程域名/remoteEntry.js
-        remoteApp: 'remoteApp@http://localhost:3001/remoteEntry.js',
+        // 远程应用别名: 远程应用名称@远程域名/{远程应用别名}.js
+        remoteApp: 'remoteApp@http://localhost:3001/remoteApp.js',
       },
       // 共享依赖
       shared: {
