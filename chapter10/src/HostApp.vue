@@ -24,7 +24,7 @@
 
     <div class="modules">
       <h2>远程模块展示</h2>
-      <p class="hint">以下是 Remote 应用提供的组件：</p>
+      <p class="hint">以下是 Remote 应用提供的组件（动态加载）：</p>
 
       <div class="module-section">
         <h3>1. Button 组件</h3>
@@ -64,35 +64,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-// 动态导入远程模块
-import('remoteApp/Button').then((module) => {
-  console.log('[Host] 加载 Button 组件成功');
-});
-import('remoteApp/Header').then((module) => {
-  console.log('[Host] 加载 Header 组件成功');
-});
-import('remoteApp/Counter').then((module) => {
-  console.log('[Host] 加载 Counter 组件成功');
-});
-import('remoteApp/utils').then((module) => {
-  console.log('[Host] 加载 utils 成功:', module);
-});
+import { ref, onMounted, defineAsyncComponent } from 'vue';
 
-// 导入远程组件（静态导入）
-import Button from 'remoteApp/Button';
-import Header from 'remoteApp/Header';
-import Counter from 'remoteApp/Counter';
-import { formatDate, formatCurrency, VERSION } from 'remoteApp/utils';
+// 使用 defineAsyncComponent 动态导入远程组件
+// 这样不需要 eager: true，共享模块会在运行时异步加载
+const Button = defineAsyncComponent(() => import('remoteApp/Button'));
+const Header = defineAsyncComponent(() => import('remoteApp/Header'));
+const Counter = defineAsyncComponent(() => import('remoteApp/Counter'));
+
+// 工具函数 - 使用 ref 存储，onMounted 中动态加载
+const formattedDate = ref('');
+const formattedMoney = ref('');
+const version = ref('');
+
+onMounted(async () => {
+  const utils = await import('remoteApp/utils');
+  const now = new Date();
+  formattedDate.value = utils.formatDate(now);
+  formattedMoney.value = utils.formatCurrency(1234.56);
+  version.value = utils.VERSION;
+});
 
 const handleClick = () => {
   alert('按钮被点击了！');
 };
-
-const now = new Date();
-const formattedDate = computed(() => formatDate(now));
-const formattedMoney = computed(() => formatCurrency(1234.56));
-const version = VERSION;
 </script>
 
 <style scoped>

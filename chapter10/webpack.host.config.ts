@@ -101,6 +101,7 @@ export default {
         vue: {
           singleton: true,
           requiredVersion: '^3.5.0',
+          eager: true,  // 配合 bootstrap 模式使用
         },
       },
     }),
@@ -116,7 +117,7 @@ export default {
 
     new webpack.DefinePlugin({
       'process.env': {
-        NODE_ENV: JSON.stringify('development'),
+        // 移除 NODE_ENV，让 Webpack 自动处理（生产模式自动设为 production）
       },
     }),
 

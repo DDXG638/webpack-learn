@@ -107,7 +107,7 @@ const hostConfig = {
 
     new webpack.DefinePlugin({
       'process.env': {
-        NODE_ENV: JSON.stringify('development'),
+        // 移除 NODE_ENV，让 Webpack 自动处理
       },
     }),
   ],
@@ -222,7 +222,7 @@ const remoteConfig = {
 
     new webpack.DefinePlugin({
       'process.env': {
-        NODE_ENV: JSON.stringify('development'),
+        // 移除 NODE_ENV，让 Webpack 自动处理
       },
     }),
   ],
