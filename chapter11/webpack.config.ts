@@ -40,9 +40,9 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
     // 定义 Vue 编译时特性标志
     // 解决 esm-bundler 版本警告
     new webpack.DefinePlugin({
-      __VUE_OPTIONS_API__: true,
-      __VUE_PROD_DEVTOOLS__: false,
-      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
+      __VUE_OPTIONS_API__: true, // 是否保留 Options API 支持
+      __VUE_PROD_DEVTOOLS__: false, // 生产环境是否启用 DevTools
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false, // 生产环境是否显示 hydration 详细错误
     }),
   ];
 
