@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
+    "@types/webpack-bundle-analyzer": "^4.7.0",
     "@vue/compiler-sfc": "^3.5.13",
     "css-loader": "^6.11.0",
     "css-minimizer-webpack-plugin": "^7.0.0",

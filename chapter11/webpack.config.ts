@@ -9,6 +9,7 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
 import { VueLoaderPlugin } from 'vue-loader';
+import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type WebpackConfig = any;
@@ -19,8 +20,8 @@ type WebpackEnv = {
   performance?: boolean;
 };
 
-export default (env: WebpackEnv): Configuration => {
-  const isProduction = process.env.NODE_ENV === 'production';
+export default (env: WebpackEnv, argv: Record<string, string | undefined>): Configuration => {
+  const isProduction = argv.mode === 'production';
   const needAnalyze = env?.analyze;
 
   const plugins: WebpackPluginInstance[] = [
@@ -42,6 +43,14 @@ export default (env: WebpackEnv): Configuration => {
       filename: 'css/[name].[contenthash:8].css',
       chunkFilename: 'css/[name].[contenthash:8].chunk.css',
     }));
+  }
+
+  if (needAnalyze) {
+    plugins.push(new BundleAnalyzerPlugin({
+      analyzerMode: 'static',
+      reportFilename: 'bundle-report.html',
+      openAnalyzer: true,
+    }))
   }
 
   const config: WebpackConfig = {
@@ -73,7 +82,11 @@ export default (env: WebpackEnv): Configuration => {
         // TypeScript
         {
           test: /\.tsx?$/,
-          use: 'ts-loader',
+          loader: 'ts-loader',
+          options: {
+            appendTsSuffixTo: [/\.vue$/],
+            transpileOnly: true,
+          },
           exclude: /node_modules/,
         },
 
@@ -132,6 +145,8 @@ export default (env: WebpackEnv): Configuration => {
 
     // 优化配置
     optimization: {
+      // 使用 ES 模块语法，启用 Tree-Shaking(标记未使用的导出)
+      usedExports: true,
       // 开启压缩
       minimize: isProduction,
 
@@ -169,6 +184,7 @@ export default (env: WebpackEnv): Configuration => {
       // ========== 关键优化配置 ==========
 
       // 1. runtimeChunk: 将 runtime 代码抽离到单独文件
+      // runtimeChunk: true, 两种配置方式效果是一样的
       runtimeChunk: {
         name: 'runtime',
       },
@@ -176,6 +192,7 @@ export default (env: WebpackEnv): Configuration => {
       // 2. splitChunks: 代码分割配置
       splitChunks: {
         chunks: 'all',
+        // maxSize 告诉 webpack 尝试将大于 maxSize 个字节的 chunk 分割成较小的部分。 这些较小的部分在体积上至少为 minSize（仅次于 maxSize）
         minSize: 30000,
         cacheGroups: {
           vendors: {
@@ -201,6 +218,10 @@ export default (env: WebpackEnv): Configuration => {
       chunkIds: needAnalyze ? 'named' : 'deterministic',
 
       // 5. 启用作用域提升
+      // 开启模块合并（Scope Hoisting）
+      // 将模块合并到单个函数中，减少函数闭包，提升执行效率
+      // 注意：Scope Hoisting 只在 production 模式下生效
+      // see: https://www.webpackjs.com/plugins/module-concatenation-plugin#root
       concatenateModules: true,
     },
 
