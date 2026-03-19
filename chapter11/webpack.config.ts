@@ -1,6 +1,6 @@
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { Configuration, WebpackPluginInstance } from 'webpack';
+import webpack, { Configuration, WebpackPluginInstance } from 'webpack';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -35,6 +35,14 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
         collapseWhitespace: true,
         removeAttributeQuotes: true,
       } : false,
+    }),
+
+    // 定义 Vue 编译时特性标志
+    // 解决 esm-bundler 版本警告
+    new webpack.DefinePlugin({
+      __VUE_OPTIONS_API__: true,
+      __VUE_PROD_DEVTOOLS__: false,
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
     }),
   ];
 
