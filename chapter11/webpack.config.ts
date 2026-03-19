@@ -80,7 +80,8 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
       extensions: ['.ts', '.tsx', '.js', '.vue', '.json'],
       alias: {
         '@': join(__dirname, 'src'),
-        'vue': 'vue/dist/vue.esm-bundler.js',
+        // 'vue': 'vue/dist/vue.esm-bundler.js',
+        // 'vue': 'vue/dist/vue.runtime.esm-bundler.js',
       },
     },
 
