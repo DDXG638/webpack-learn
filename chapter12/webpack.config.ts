@@ -52,7 +52,8 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
     }),
   ];
 
-  if (isProduction && !useCdn) {
+  // 生产环境抽离 CSS 到单独文件（与 CDN 模式无关）
+  if (isProduction) {
     plugins.push(new MiniCssExtractPlugin({
       filename: 'css/[name].[contenthash:8].css',
       chunkFilename: 'css/[name].[contenthash:8].chunk.css',
@@ -134,7 +135,7 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
         {
           test: /\.css$/,
           use: [
-            isProduction && !useCdn ? MiniCssExtractPlugin.loader : 'style-loader',
+            isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader',
             'postcss-loader',
           ].filter(Boolean),
@@ -144,7 +145,7 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
         {
           test: /\.scss$/,
           use: [
-            isProduction && !useCdn ? MiniCssExtractPlugin.loader : 'style-loader',
+            isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
             'css-loader',
             'postcss-loader',
             'sass-loader',
