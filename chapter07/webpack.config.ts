@@ -68,6 +68,7 @@ export default (env: Record<string, string | undefined>, argv: Record<string, st
       // 开启模块合并（Scope Hoisting）
       // 将模块合并到单个函数中，减少函数闭包，提升执行效率
       // 注意：Scope Hoisting 只在 production 模式下生效
+      // see: https://www.webpackjs.com/plugins/module-concatenation-plugin#root
       concatenateModules: true,
 
       // 最小化删除未使用的导出
