@@ -25,6 +25,7 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
   const needAnalyze = env?.analyze;
 
   const cdnUrls = {
+    // 具体使用哪个vue版本看: https://github.com/vuejs/core/tree/main/packages/vue#which-dist-file-to-use
     vue: 'https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js',
     vueRouter: 'https://unpkg.com/vue-router@4.5.0/dist/vue-router.global.prod.js',
     pinia: 'https://unpkg.com/pinia@2.3.1/dist/pinia.iife.prod.js',
@@ -88,8 +89,9 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
       extensions: ['.ts', '.tsx', '.js', '.vue', '.json'],
       alias: {
         '@': join(__dirname, 'src'),
-        // CDN 模式不使用本地 vue
-        'vue': useCdn ? 'vue/dist/vue.esm-bundler.js' : 'vue/dist/vue.runtime.esm-bundler.js',
+        // 始终使用 runtime 版本（不带编译器）
+        // vue-loader 已经在构建时编译了 .vue 文件
+        'vue': 'vue/dist/vue.runtime.esm-bundler.js',
       },
     },
 
