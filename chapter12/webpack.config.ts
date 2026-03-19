@@ -99,15 +99,7 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
         {
           test: /\.tsx?$/,
           use: [
-            // 先用 ts-loader 处理 TypeScript
-            {
-              loader: 'ts-loader',
-              options: {
-                appendTsSuffixTo: [/\.vue$/],
-                transpileOnly: true,
-              },
-            },
-            // 再用 babel-loader 转译（仅对非 Vue 文件生效，因为 Vue 文件已经被 vue-loader 处理）
+            // babel-loader 在最后，先执行（从后往前）
             {
               loader: 'babel-loader',
               options: {
@@ -120,6 +112,14 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
                     modules: false,
                   }],
                 ],
+              },
+            },
+            // ts-loader 在最前，后执行
+            {
+              loader: 'ts-loader',
+              options: {
+                appendTsSuffixTo: [/\.vue$/],
+                transpileOnly: true,
               },
             },
           ],
