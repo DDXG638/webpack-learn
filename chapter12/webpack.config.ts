@@ -30,7 +30,7 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
       // CDN 模式使用不同的模板
       template: useCdn ? './public/index.cdn.html' : './public/index.html',
       title: 'Webpack5 综合实战',
-      inject: true,
+      inject: 'body', // 将js插入到html的body中
       minify: isProduction ? {
         removeComments: true,
         collapseWhitespace: true,
