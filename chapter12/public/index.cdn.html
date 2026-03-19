@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= htmlWebpackPlugin.options.title %></title>
-  <!-- CDN 引入 Vue 相关依赖 -->
-  <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
-  <script src="https://unpkg.com/vue-router@4.5.0/dist/vue-router.global.prod.js"></script>
-  <script src="https://unpkg.com/pinia@2.3.1/dist/pinia.iife.prod.js"></script>
   <style>
     * {
       margin: 0;
@@ -22,5 +18,10 @@
 </head>
 <body>
   <div id="app"></div>
+
+  <!-- CDN 引入 Vue 相关依赖（放在 body 末尾避免阻塞解析） -->
+  <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/vue-router@4.5.0/dist/vue-router.global.prod.js"></script>
+  <script src="https://unpkg.com/pinia@2.3.1/dist/pinia.iife.prod.js"></script>
 </body>
 </html>

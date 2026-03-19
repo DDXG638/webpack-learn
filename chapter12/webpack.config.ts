@@ -24,13 +24,6 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
   const useCdn = env?.cdn;
   const needAnalyze = env?.analyze;
 
-  const cdnUrls = {
-    // 具体使用哪个vue版本看: https://github.com/vuejs/core/tree/main/packages/vue#which-dist-file-to-use
-    vue: 'https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js',
-    vueRouter: 'https://unpkg.com/vue-router@4.5.0/dist/vue-router.global.prod.js',
-    pinia: 'https://unpkg.com/pinia@2.3.1/dist/pinia.iife.prod.js',
-  };
-
   const plugins: WebpackPluginInstance[] = [
     new VueLoaderPlugin(),
     new HtmlWebpackPlugin({
@@ -282,20 +275,6 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
       chunkModules: false,
     },
   };
-
-  // CDN 模式注入 CDN 链接
-  if (useCdn && isProduction) {
-    const htmlPlugin = plugins.find(p => p.constructor.name === 'HtmlWebpackPlugin');
-    if (htmlPlugin) {
-      (htmlPlugin as any).userOptions.cdn = {
-        js: [
-          cdnUrls.vue,
-          cdnUrls.vueRouter,
-          cdnUrls.pinia,
-        ],
-      };
-    }
-  }
 
   return config;
 };
