@@ -106,9 +106,7 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
                 cacheDirectory: true,
                 presets: [
                   ['@babel/preset-env', {
-                    targets: {
-                      browsers: ['> 1%', 'last 2 versions', 'not dead'],
-                    },
+                    // browserslist 会自动从 .browserslistrc 读取
                     modules: false,
                   }],
                 ],
