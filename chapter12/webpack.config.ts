@@ -100,12 +100,7 @@ export default (env: WebpackEnv, argv: Record<string, string | undefined>): Conf
               loader: 'babel-loader',
               options: {
                 cacheDirectory: true,
-                presets: [
-                  ['@babel/preset-env', {
-                    // browserslist 会自动从 .browserslistrc 读取
-                    modules: false,
-                  }],
-                ],
+                // presets 统一由 babel.config.js 管理，避免覆盖冲突
               },
             },
             // ts-loader 在最前，后执行
