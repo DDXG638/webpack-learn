@@ -537,6 +537,58 @@ use: ['vue-style-loader', 'css-loader']
 use: [MiniCssExtractPlugin.loader, 'css-loader']
 ```
 
+### Q: Webpack5 如何判断增量编译的范围？修改一个文件后，依赖它的模块和被它依赖的模块都需要重新编译吗？
+
+**A:** Webpack5 通过**文件监听 + 模块依赖图 + 持久化缓存**三者配合来判断增量编译范围。
+
+#### 1. 文件变更检测
+
+Webpack5 使用 `chokidar` 监听文件系统（`watchOptions` 配置），当文件变化时生成两个集合：
+
+- `compilation.modifiedFiles` — 被修改的文件集合
+- `compilation.removedFiles` — 被删除的文件集合
+
+#### 2. 缓存失效传播（核心）
+
+Webpack5 默认开启 `cache.type: 'filesystem'`，每个模块的编译结果会被缓存，缓存 key 由**模块源码 hash + 依赖模块的 hash** 共同决定：
+
+```
+module_cache_key = hash(moduleSource, dependencyModuleHashes)
+```
+
+当一个文件被修改后，失效传播是**单向向上**的：
+
+```
+修改 utils.ts
+  ├── utils.ts 自身缓存失效，必须重新编译 ✅
+  ├── utils.ts 依赖的模块（它 import 的）→ 缓存不变，不需要编译 ❌
+  └── 依赖 utils.ts 的模块（import 它的）→ 依赖链 hash 变了，级联失效 ✅
+```
+
+#### 3. 各类模块是否需要重新编译
+
+| 模块类型 | 是否需要重新编译 | 原因 |
+|---------|:---:|------|
+| **被修改的文件本身** | 需要 | 源码变了 |
+| **它依赖的模块**（它 import 的） | **不需要** | 这些模块的源码和依赖链都没变，缓存命中 |
+| **依赖它的模块**（import 它的） | **需要** | 它们依赖链中的某个模块 hash 变了，缓存失效 |
+
+#### 4. HMR 更新边界
+
+增量编译的模块集合确定后，HMR 运行时还会进一步裁剪——它从变更模块**向上**（往依赖方方向）遍历，遇到 `module.hot.accept()` 就停止：
+
+- **Vue 项目中**，`.vue` 文件经 `vue-loader` 处理后自动注入 HMR accept 边界
+- 修改 `utils.ts` → 重新编译 `utils.ts` + 依赖它的 `Component.vue` → 但 HMR 更新只推到 accept 边界就停下
+- 不会触发整页刷新，只热更新受影响的组件
+
+#### 5. Webpack5 vs Webpack4 的改进
+
+Webpack4 主要靠内存中的模块 ID 和时间戳判断，每次都要重新构建整个依赖链。Webpack5 的持久化缓存可以将「这个模块没变」的结论写到磁盘，**二次启动冷构建也能命中缓存**，而不只是 HMR 热构建时有效。
+
+#### 总结
+
+一句话：**修改一个模块，它依赖的（下游）不需要重新编译，依赖它的（上游）需要重新编译；HMR 运行时再根据 accept 边界裁剪实际的推送范围。**
+
 ## 参考资料
 
 - [webpack-dev-server 文档](https://webpack.js.org/configuration/dev-server/)
