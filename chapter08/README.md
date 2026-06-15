@@ -15,7 +15,7 @@ Tapable 是 Webpack 的核心依赖库，提供了统一的钩子（Hook）机�
 
 **Tapable 与 Webpack 的关系：**
 - Webpack 本质上是一个基于 Tapable 构建的插件系统
-- 所有的 Loader 和 Plugin 都通过 Tapable 钩子机制工作
+- Plugin 通过 Tapable 钩子机制工作，Loader 则是基于函数组合的源码转换器
 - 理解 Tapable 是深入学习 Webpack 原理的基础
 
 **安装 Tapable：**
@@ -462,3 +462,52 @@ npm run build
    **建议**：虽然 `tap` 可以混用，但为了代码可读性和避免潜在问题，建议按照钩子类型使用对应的注册方法：
    - `SyncHook` → 用 `tap`
    - `AsyncSeriesHook` → 用 `tapAsync` 或 `tapPromise`
+
+## 答疑模块
+
+### Q: Loader 也通过 Tapable 钩子机制工作吗？
+
+**A:** 不，Loader 不是基于 Tapable 工作的。
+
+#### Loader 本质是纯函数组合
+
+Loader 不基于 Tapable，而是基于**函数组合模式**。每个 loader 就是一个接收源码、返回转换后源码的函数：
+
+```ts
+// loader 的基本形态
+function myLoader(source: string) {
+  return source.replace(/foo/g, 'bar');
+}
+```
+
+Webpack 内部通过 `loader-runner` 模块按**从右到左（从下到上）**的顺序依次调用这些函数，前一个的输出作为后一个的输入——这是函数组合模式，不是事件驱动。
+
+```
+source → loader1 → loader2 → loader3 → output
+```
+
+#### Plugin 才基于 Tapable
+
+Plugin 通过 `apply(compiler)` 注册，在构建流程的各个阶段通过 Tapable 钩子介入：
+
+```ts
+class MyPlugin {
+  apply(compiler) {
+    compiler.hooks.emit.tap('MyPlugin', (compilation) => {
+      // Tapable 钩子回调
+    });
+  }
+}
+```
+
+#### 对比总结
+
+| | Loader | Plugin |
+|---|--------|--------|
+| **机制** | 函数组合（纯函数） | Tapable 事件驱动 |
+| **执行方式** | `loader-runner` 顺序调用 | 通过 `compiler.hooks.xxx.tap()` 注册回调 |
+| **关注点** | 文件内容转换 | 构建流程各阶段介入 |
+
+#### 一点交集
+
+Loader 的**匹配和调度**环节涉及 Tapable——`NormalModuleFactory` 通过 `resolveLoader` 等钩子决定哪些 loader 应用于哪些文件。但 loader 本身的执行逻辑与 Tapable 无关。
